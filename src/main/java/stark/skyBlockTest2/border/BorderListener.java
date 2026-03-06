@@ -20,10 +20,9 @@ public class BorderListener implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-
-        // Opóźnienie o 2 ticki (0.1 sekundy) zazwyczaj wystarcza
+        // Opóźnienie 2 ticki — gracz musi być w pełni załadowany
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (player.isOnline()) { // Zawsze sprawdzaj, czy gracz nie wyszedł w międzyczasie
+            if (player.isOnline()) {
                 borderManager.updateBorder(player);
             }
         }, 2L);
@@ -36,8 +35,11 @@ public class BorderListener implements Listener {
 
     @EventHandler
     public void onTeleport(PlayerTeleportEvent event) {
-        Player player = event.getPlayer();
+        // Jeśli teleport zmienia świat, to PlayerChangedWorldEvent i tak odpali
+        // updateBorder — pomijamy tutaj, żeby nie aktualizować dwa razy.
+        if (event.getFrom().getWorld() != event.getTo().getWorld()) return;
 
+        Player player = event.getPlayer();
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (player.isOnline()) {
                 borderManager.updateBorder(player);
@@ -52,10 +54,12 @@ public class BorderListener implements Listener {
 
     @EventHandler
     public void onMove(PlayerMoveEvent event) {
+        // Null check na getTo() — może być null przy przerwaniu teleportu przez inny plugin
+        if (event.getTo() == null) return;
 
-        if (event.getFrom().getChunk().equals(event.getTo().getChunk())) {
-            return;
-        }
+        // Aktualizujemy border tylko przy zmianie chunka, nie przy każdym kroku
+        if (event.getFrom().getChunk().equals(event.getTo().getChunk())) return;
+
         borderManager.updateBorder(event.getPlayer());
     }
 }

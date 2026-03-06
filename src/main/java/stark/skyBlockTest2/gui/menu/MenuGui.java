@@ -17,6 +17,7 @@ public class MenuGui {
                     .set(10, GuiItems.spawn())
                     .set(12, GuiItems.clock())
                     .set(14, GuiItems.home())
+                    .set(16, GuiItems.islandHub())
                     .set(28, GuiItems.upgradeSizeLvl())
                     .set(30, GuiItems.members())
                     .set(32, GuiItems.islandSettings())

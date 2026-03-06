@@ -1,36 +1,53 @@
 package stark.skyBlockTest2.island.command;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
-import org.bukkit.util.StringUtil;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class IslandTabCompleter implements TabCompleter {
 
-    private final List<String> subCommands = Arrays.asList(
-            "create", "home", "sethome", "repairhome", "delete", "upgrade",
-            "invite", "accept", "decline", "kick", "leave", "members", "setleader", "setlvl", "visit"
+    private static final List<String> SUBCOMMANDS = List.of(
+            "create", "home", "sethome", "repairhome", "delete",
+            "upgrade", "setlvl",
+            "invite", "accept", "decline", "kick", "leave",
+            "members", "list",
+            "setleader", "transfer",
+            "visit",
+            "ban", "unban", "pardon",
+            "setcoleader", "coleader"
+    );
+
+    // Subkomendy wymagające nicku gracza jako args[1]
+    private static final List<String> NEEDS_PLAYER = List.of(
+            "invite", "kick", "setleader", "transfer", "visit",
+            "ban", "unban", "pardon", "setcoleader", "coleader"
     );
 
     @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+    public List<String> onTabComplete(CommandSender sender, Command command,
+                                      String alias, String[] args) {
+        if (!(sender instanceof Player)) return List.of();
+
         if (args.length == 1) {
-            // Podpowiadaj główne podkomendy
-            return StringUtil.copyPartialMatches(args[0], subCommands, new ArrayList<>());
-        } else if (args.length == 2) {
-            // Podpowiadaj graczy online dla konkretnych komend
-            if (args[0].equalsIgnoreCase("invite") ||
-                    args[0].equalsIgnoreCase("kick") ||
-                    args[0].equalsIgnoreCase("setleader")) {
-                return null; // Zwrócenie null w Bukkit domyślnie podpowiada graczy online
-            }
+            String typed = args[0].toLowerCase();
+            return SUBCOMMANDS.stream()
+                    .filter(s -> s.startsWith(typed))
+                    .collect(Collectors.toList());
         }
 
-        return Collections.emptyList();
+        if (args.length == 2 && NEEDS_PLAYER.contains(args[0].toLowerCase())) {
+            String typed = args[1].toLowerCase();
+            return Bukkit.getOnlinePlayers().stream()
+                    .map(Player::getName)
+                    .filter(name -> name.toLowerCase().startsWith(typed))
+                    .collect(Collectors.toList());
+        }
+
+        return List.of();
     }
 }

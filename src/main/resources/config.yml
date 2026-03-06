@@ -1,0 +1,23 @@
+# ============================================================
+#   SkyBlockTest2 - Konfiguracja
+# ============================================================
+
+island:
+  # Koszt ulepszenia wyspy do danego poziomu.
+  # Poziom 1 to startowy — gracz dostaje go za darmo przy tworzeniu wyspy.
+  # Klucz to docelowy poziom (2-5).
+  upgrade-costs:
+    2: 5000.0
+    3: 15000.0
+    4: 40000.0
+    5: 100000.0
+
+nether-island:
+  # Koszt zakupu Wyspy Nether (jednorazowy).
+  purchase-cost: 10000.0
+  # Koszt ulepszenia Wyspy Nether do danego poziomu (2-5).
+  upgrade-costs:
+    2: 8000.0
+    3: 20000.0
+    4: 50000.0
+    5: 120000.0

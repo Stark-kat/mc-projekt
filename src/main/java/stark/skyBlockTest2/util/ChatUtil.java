@@ -8,6 +8,31 @@ import org.bukkit.entity.Player;
 
 public class ChatUtil {
 
+    public static void sendDeleteConfirmMessage(Player player) {
+        player.sendMessage(" ");
+        player.sendMessage("§c§lUWAGA! §cCzy na pewno chcesz usunąć wyspę?");
+        player.sendMessage("§7Ta operacja jest §c§lnieodwracalna§7!");
+
+        // Przycisk POTWIERDŹ
+        TextComponent confirm = new TextComponent("§8[§a§lPOTWIERDŹ§8]");
+        confirm.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/island delete confirm"));
+        confirm.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("§cKliknij, aby nieodwracalnie usunąć wyspę")));
+
+        // Przycisk ZREZYGNUJ
+        TextComponent cancel = new TextComponent("§8[§e§lZREZYGNUJ§8]");
+        cancel.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/island delete cancel"));
+        cancel.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("§eKliknij, aby anulować usuwanie")));
+
+        TextComponent message = new TextComponent("§7Wybierz opcję: ");
+        message.addExtra(confirm);
+        message.addExtra(new TextComponent("  "));
+        message.addExtra(cancel);
+
+        player.spigot().sendMessage(message);
+        player.sendMessage("§7(Wygaśnie za 60 sekund)");
+        player.sendMessage(" ");
+    }
+
     public static void sendInviteMessage(Player target, String ownerName) {
         target.sendMessage(" ");
         target.sendMessage("§eGracz §6" + ownerName + " §ezaprasza Cię do swojej wyspy!");

@@ -5,21 +5,26 @@ import org.bukkit.WorldBorder;
 import org.bukkit.entity.Player;
 import stark.skyBlockTest2.island.Island;
 import stark.skyBlockTest2.island.IslandManager;
-
+import stark.skyBlockTest2.island.IslandType;
 
 public class BorderManager {
 
     private final IslandManager islandManager;
-    private final World islandWorld;
 
-    public BorderManager(IslandManager islandManager, World islandWorld) {
+    public BorderManager(IslandManager islandManager) {
         this.islandManager = islandManager;
-        this.islandWorld = islandWorld;
+    }
+
+    private boolean isIslandWorld(World world) {
+        if (world == null) return false;
+        for (IslandType type : IslandType.values()) {
+            if (type.worldName.equals(world.getName())) return true;
+        }
+        return false;
     }
 
     public void updateBorder(Player player) {
-
-        if (!player.getWorld().equals(islandWorld)) {
+        if (!isIslandWorld(player.getWorld())) {
             removeBorder(player);
             return;
         }
@@ -32,13 +37,16 @@ public class BorderManager {
 
         WorldBorder border = org.bukkit.Bukkit.createWorldBorder();
 
-        double centerX = (island.getCenter().getBlockX() >> 4 << 4) + 8.0;
-        double centerZ = (island.getCenter().getBlockZ() >> 4 << 4) + 8.0;
-        border.setCenter(centerX, centerZ);
+        // Środek wyspy jest już ustawiony jako chunkX*16 + 8 w IslandManager —
+        // możemy go użyć bezpośrednio zamiast przeliczać z powrotem przez chunk
+        border.setCenter(island.getCenter().getX(), island.getCenter().getZ());
 
+        // Rozmiar: (size*2 + 1) chunków * 16 bloków
+        // np. size=0 → 1 chunk = 16 bloków, size=1 → 3 chunki = 48 bloków
         double borderSize = (island.getSize() * 2.0 + 1.0) * 16.0;
-
         border.setSize(borderSize);
+
+        // Wyłączamy oba ostrzeżenia — bez czerwonego ekranu i bez żółtych linii
         border.setWarningDistance(0);
 
         player.setWorldBorder(border);

@@ -1,16 +1,16 @@
 package stark.skyBlockTest2;
 
 import org.bukkit.Bukkit;
-import org.bukkit.World;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 import stark.skyBlockTest2.border.BorderListener;
 import stark.skyBlockTest2.border.BorderManager;
+import stark.skyBlockTest2.economy.EconomyManager;
 import stark.skyBlockTest2.gui.listener.GuiListener;
 import stark.skyBlockTest2.gui.menu.*;
 import stark.skyBlockTest2.island.SchematicManager;
 import stark.skyBlockTest2.island.command.IslandCommand;
 import stark.skyBlockTest2.island.IslandManager;
-import stark.skyBlockTest2.island.command.IslandLvlCommand;
 import stark.skyBlockTest2.island.command.IslandTabCompleter;
 import stark.skyBlockTest2.island.listener.IslandProtectionListener;
 import stark.skyBlockTest2.Spawn.SetSpawnCommand;
@@ -27,63 +27,84 @@ public class SkyBlockTest2 extends JavaPlugin {
     private WorldManager worldManager;
     private IslandManager islandManager;
     private TeleportManager teleportManager;
-    private MenuGui menuGui;
-    private UpgradeIslandGui upgradeIslandGui;
-    private MembersGui membersGui;
-    private MemberSettingsGui memberSettingsGui;
-    private IslandSettingsGui islandSettingsGui;
-    private BorderManager borderManager;
     private SchematicManager schematicManager;
+    private EconomyManager economyManager;
 
     @Override
     public void onEnable() {
-
         instance = this;
 
         saveDefaultConfig();
         saveResource("islands.yml", false);
 
         worldManager = new WorldManager(this);
-        worldManager.createWorld();
-        World islandWorld = Bukkit.getWorld("world_skyblock");
-        this.schematicManager = new SchematicManager(this);
+        worldManager.createWorlds();
 
+        schematicManager = new SchematicManager(this);
         teleportManager = new TeleportManager(this);
         CounterMenager counterMenager = new CounterMenager(this);
 
-        this.islandManager = new IslandManager(this, teleportManager);
-        this.borderManager = new BorderManager(this.islandManager, islandWorld);
-        this.islandManager.setBorderManager(this.borderManager);
+        islandManager = new IslandManager(this, teleportManager);
+        BorderManager borderManager = new BorderManager(islandManager);
+        islandManager.setBorderManager(borderManager);
 
-        menuGui = new MenuGui();
-        upgradeIslandGui = new UpgradeIslandGui();
-        memberSettingsGui = new MemberSettingsGui();
-        membersGui = new MembersGui(islandManager);
-        islandSettingsGui = new IslandSettingsGui(islandManager);
+        // Ekonomia — setup po załadowaniu wszystkich pluginów
+        economyManager = new EconomyManager(this);
+        if (economyManager.setup()) {
+            islandManager.setEconomyManager(economyManager);
+        }
 
         MenuGui menuGui = new MenuGui();
+        UpgradeIslandGui upgradeIslandGui = new UpgradeIslandGui(islandManager, economyManager);
+        MemberSettingsGui memberSettingsGui = new MemberSettingsGui(islandManager);
+        MembersGui membersGui = new MembersGui(islandManager);
+        IslandSettingsGui islandSettingsGui = new IslandSettingsGui(islandManager);
         CreateIslandGui createIslandGui = new CreateIslandGui();
+        BannedPlayersGui bannedPlayersGui = new BannedPlayersGui(islandManager);
+        IslandHubGui islandHubGui = new IslandHubGui(islandManager, economyManager);
+        IslandTypeSettingsGui islandTypeSettingsGui = new IslandTypeSettingsGui(islandManager);
+        IslandTypeUpgradeGui islandTypeUpgradeGui = new IslandTypeUpgradeGui(islandManager, economyManager);
 
         IslandCommand islandCmd = new IslandCommand(islandManager, menuGui, createIslandGui);
 
+        PluginCommand islandCommand = getCommand("island");
+        PluginCommand spawnCommand = getCommand("spawn");
+        PluginCommand setSpawnCommand = getCommand("setspawn");
 
-        getCommand("island").setExecutor(new IslandCommand(islandManager, menuGui, createIslandGui));
-        getCommand("setspawn").setExecutor(new SetSpawnCommand(this, teleportManager));
-        getCommand("spawn").setExecutor(new SpawnCommand(teleportManager));
-        //getCommand("issetlvl").setExecutor(new IslandLvlCommand());
-        getCommand("island").setExecutor(islandCmd);
-        getCommand("island").setTabCompleter(new IslandTabCompleter());
+        if (islandCommand != null) {
+            islandCommand.setExecutor(islandCmd);
+            islandCommand.setTabCompleter(new IslandTabCompleter());
+        } else {
+            getLogger().severe("Komenda 'island' nie znaleziona w plugin.yml!");
+        }
 
-        //getCommand("menu").setExecutor(new MenuCommand(menuGui, islandManager, createIslandGui));
+        if (spawnCommand != null) {
+            spawnCommand.setExecutor(new SpawnCommand(teleportManager));
+        } else {
+            getLogger().severe("Komenda 'spawn' nie znaleziona w plugin.yml!");
+        }
 
-        getServer().getPluginManager().registerEvents(new IslandProtectionListener(islandManager),this);
+        if (setSpawnCommand != null) {
+            setSpawnCommand.setExecutor(new SetSpawnCommand(this, teleportManager));
+        } else {
+            getLogger().severe("Komenda 'setspawn' nie znaleziona w plugin.yml!");
+        }
+
+        getServer().getPluginManager().registerEvents(new IslandProtectionListener(islandManager), this);
         getServer().getPluginManager().registerEvents(new BorderListener(borderManager, this), this);
         getServer().getPluginManager().registerEvents(new JoinMessage(counterMenager), this);
         getServer().getPluginManager().registerEvents(new TeleportListener(teleportManager), this);
-        getServer().getPluginManager().registerEvents(new GuiListener(teleportManager, islandManager, this, menuGui, upgradeIslandGui, membersGui, memberSettingsGui, islandSettingsGui), this);
+        getServer().getPluginManager().registerEvents(new GuiListener(teleportManager, islandManager, this, menuGui, upgradeIslandGui, membersGui, memberSettingsGui, islandSettingsGui, bannedPlayersGui, islandHubGui, islandTypeSettingsGui, islandTypeUpgradeGui), this);
 
         islandManager.performStartupScan();
         getLogger().info("SkyBlockTest2 enabled!");
+    }
+
+    @Override
+    public void onDisable() {
+        if (teleportManager != null) {
+            teleportManager.cancelAll();
+        }
     }
 
     public static SkyBlockTest2 getInstance() {
@@ -102,10 +123,7 @@ public class SkyBlockTest2 extends JavaPlugin {
         return schematicManager;
     }
 
-    @Override
-    public void onDisable() {
-        if (teleportManager != null) {
-            teleportManager.cancelAll();
-        }
+    public EconomyManager getEconomyManager() {
+        return economyManager;
     }
 }

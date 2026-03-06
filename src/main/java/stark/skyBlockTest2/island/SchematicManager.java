@@ -11,12 +11,15 @@ import com.sk89q.worldedit.function.operation.Operation;
 import com.sk89q.worldedit.function.operation.Operations;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.session.ClipboardHolder;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.logging.Level;
 
 public class SchematicManager {
 
@@ -25,53 +28,79 @@ public class SchematicManager {
 
     public SchematicManager(JavaPlugin plugin) {
         this.plugin = plugin;
-        // Tworzymy folder /plugins/TwojPlugin/schematics/
         this.schematicFolder = new File(plugin.getDataFolder(), "schematics");
         if (!schematicFolder.exists()) {
             schematicFolder.mkdirs();
         }
     }
 
-    /*
+    /**
      * Wkleja schemat w podanej lokalizacji.
-     * @param loc Miejsce, w którym ma się pojawić punkt "Origin" schematu
-     * @param schematicName Nazwa pliku (bez .schem)
+     * Odczyt pliku odbywa się asynchronicznie, wklejanie na głównym wątku.
+     * Po zakończeniu wklejania wywoływany jest callback (może być null).
+     *
+     * @param loc           Lokalizacja środka wklejania (origin schematu)
+     * @param schematicName Nazwa pliku bez rozszerzenia (np. "Default_Island")
+     * @param onComplete    Runnable wykonany na głównym wątku po wklejeniu (może być null)
      */
-    public void pasteSchematic(Location loc, String schematicName) {
-        File file = new File(schematicFolder, schematicName + ".schem");
-
-        if (!file.exists()) {
-            plugin.getLogger().warning("Nie znaleziono schematu: " + file.getName());
+    public void pasteSchematic(Location loc, String schematicName, Runnable onComplete) {
+        World world = loc.getWorld();
+        if (world == null) {
+            plugin.getLogger().warning("[SchematicManager] Nie można wkleić schematu '"
+                    + schematicName + "' — świat jest null.");
             return;
         }
 
-        // 1. Wybieramy format pliku
-        ClipboardFormat format = ClipboardFormats.findByFile(file);
-        if (format == null) return;
-
-        // 2. Wczytujemy schemat do schowka (Clipboard)
-        try (ClipboardReader reader = format.getReader(new FileInputStream(file))) {
-            Clipboard clipboard = reader.read();
-
-            // 3. Tworzymy sesję edycji (EditSession)
-            try (EditSession editSession = WorldEdit.getInstance().newEditSession(BukkitAdapter.adapt(loc.getWorld()))) {
-
-                // 4. Przygotowujemy operację wklejania
-                Operation operation = new ClipboardHolder(clipboard)
-                        .createPaste(editSession)
-                        .to(BlockVector3.at(loc.getX(), loc.getY(), loc.getZ()))
-                        .ignoreAirBlocks(false) // Jeśli true, nie usunie bloków, które są w miejscu wklejania
-                        .build();
-
-                // 5. Wykonujemy wklejanie
-                Operations.complete(operation);
-                plugin.getLogger().info("Pomyślnie wklejono wyspę: " + schematicName);
-            }
-        } catch (IOException e) {
-            plugin.getLogger().severe("Błąd podczas wczytywania schematu!");
-            e.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
+        File file = new File(schematicFolder, schematicName + ".schem");
+        if (!file.exists()) {
+            plugin.getLogger().warning("[SchematicManager] Nie znaleziono schematu: " + file.getName()
+                    + ". Upewnij się, że plik istnieje w folderze /schematics/.");
+            return;
         }
+
+        ClipboardFormat format = ClipboardFormats.findByFile(file);
+        if (format == null) {
+            plugin.getLogger().warning("[SchematicManager] Nieznany format pliku: " + file.getName());
+            return;
+        }
+
+        // Snapshot lokalizacji — nie trzymamy referencji do Location, która może się zmienić
+        final double x = loc.getX();
+        final double y = loc.getY();
+        final double z = loc.getZ();
+
+        // Odczyt pliku i wklejanie asynchronicznie — nie blokujemy głównego wątku
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try (ClipboardReader reader = format.getReader(new FileInputStream(file))) {
+                Clipboard clipboard = reader.read();
+
+                // WorldEdit paste musi wrócić na główny wątek
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    try (EditSession editSession = WorldEdit.getInstance()
+                            .newEditSession(BukkitAdapter.adapt(world))) {
+
+                        Operation operation = new ClipboardHolder(clipboard)
+                                .createPaste(editSession)
+                                .to(BlockVector3.at(x, y, z))
+                                .ignoreAirBlocks(false)
+                                .build();
+
+                        Operations.complete(operation);
+                        plugin.getLogger().info("[SchematicManager] Wklejono schemat: " + schematicName);
+
+                        if (onComplete != null) onComplete.run();
+
+                    } catch (Exception e) {
+                        plugin.getLogger().log(Level.SEVERE,
+                                "[SchematicManager] Błąd WorldEdit podczas wklejania schematu '"
+                                        + schematicName + "'!", e);
+                    }
+                });
+
+            } catch (IOException e) {
+                plugin.getLogger().log(Level.SEVERE,
+                        "[SchematicManager] Błąd odczytu pliku schematu '" + schematicName + "'!", e);
+            }
+        });
     }
 }

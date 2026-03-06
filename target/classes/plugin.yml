@@ -2,7 +2,7 @@ name: SkyBlockTest2
 version: '1.0-SNAPSHOT'
 main: stark.skyBlockTest2.SkyBlockTest2
 api-version: '1.21'
-depend: [WorldEdit]
+depend: [WorldEdit, Vault]
 commands:
   island:
     aliases: [is, wyspa, menu]
