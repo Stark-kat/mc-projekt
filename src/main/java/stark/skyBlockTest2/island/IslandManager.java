@@ -6,7 +6,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import stark.skyBlockTest2.SkyBlockTest2;
-import stark.skyBlockTest2.Spawn.TeleportManager;
+import stark.skyBlockTest2.teleport.TeleportManager;
 import stark.skyBlockTest2.border.BorderManager;
 import stark.skyBlockTest2.economy.EconomyManager;
 
@@ -28,7 +28,7 @@ public class IslandManager {
     private EconomyManager economyManager;
 
     private final int[] islandSizes = {0, 1, 2, 3, 4};
-    private final int SPACING_CHUNKS = 10;
+    private static final int SPACING_CHUNKS = 10;
 
     private int currentIndex;
     private final List<Integer> freeIndexes = new ArrayList<>();

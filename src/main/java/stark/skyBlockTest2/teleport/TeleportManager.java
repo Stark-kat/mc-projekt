@@ -1,4 +1,4 @@
-package stark.skyBlockTest2.Spawn;
+package stark.skyBlockTest2.teleport;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;

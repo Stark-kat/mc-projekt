@@ -1,4 +1,4 @@
-package stark.skyBlockTest2.Spawn;
+package stark.skyBlockTest2.teleport;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -7,7 +7,6 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
-import stark.skyBlockTest2.island.Island;
 
 public class TeleportListener implements Listener {
 

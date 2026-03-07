@@ -7,8 +7,6 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import stark.skyBlockTest2.SkyBlockTest2;
-import stark.skyBlockTest2.island.IslandType;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.*;

@@ -1,6 +1,5 @@
 package stark.skyBlockTest2;
 
-import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 import stark.skyBlockTest2.border.BorderListener;
@@ -13,11 +12,11 @@ import stark.skyBlockTest2.island.command.IslandCommand;
 import stark.skyBlockTest2.island.IslandManager;
 import stark.skyBlockTest2.island.command.IslandTabCompleter;
 import stark.skyBlockTest2.island.listener.IslandProtectionListener;
-import stark.skyBlockTest2.Spawn.SetSpawnCommand;
-import stark.skyBlockTest2.Spawn.SpawnCommand;
-import stark.skyBlockTest2.Spawn.TeleportListener;
-import stark.skyBlockTest2.Spawn.TeleportManager;
-import stark.skyBlockTest2.World.WorldManager;
+import stark.skyBlockTest2.spawn.SetSpawnCommand;
+import stark.skyBlockTest2.spawn.SpawnCommand;
+import stark.skyBlockTest2.teleport.TeleportListener;
+import stark.skyBlockTest2.teleport.TeleportManager;
+import stark.skyBlockTest2.world.WorldManager;
 import stark.skyBlockTest2.util.CounterMenager;
 import stark.skyBlockTest2.util.JoinMessage;
 

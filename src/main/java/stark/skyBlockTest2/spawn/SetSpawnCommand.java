@@ -1,4 +1,4 @@
-package stark.skyBlockTest2.Spawn;
+package stark.skyBlockTest2.spawn;
 
 import org.bukkit.Location;
 import org.bukkit.command.Command;
@@ -6,6 +6,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import stark.skyBlockTest2.teleport.TeleportManager;
 
 public class SetSpawnCommand implements CommandExecutor {
 

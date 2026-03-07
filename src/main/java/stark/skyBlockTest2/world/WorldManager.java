@@ -1,4 +1,4 @@
-package stark.skyBlockTest2.World;
+package stark.skyBlockTest2.world;
 
 import org.bukkit.*;
 import org.bukkit.generator.ChunkGenerator;
