@@ -17,7 +17,7 @@ public class IslandTypeUpgradeGui {
     private final EconomyManager economyManager;
 
     private static final int[] SIZES      = {0, 1, 2, 3, 4};
-    private static final int[] LEVEL_SLOTS = {19, 21, 23, 25, 27};
+    private static final int[] LEVEL_SLOTS = {18, 20, 22, 24, 26};
 
     public IslandTypeUpgradeGui(IslandManager islandManager, EconomyManager economyManager) {
         this.islandManager  = islandManager;
@@ -33,7 +33,7 @@ public class IslandTypeUpgradeGui {
 
         int currentLevel = islandManager.getCurrentLevel(player.getUniqueId(), type);
 
-        Inventory gui = Bukkit.createInventory(new MenuHolder(), 54, "§8Ulepszanie: " + type.displayName);
+        Inventory gui = Bukkit.createInventory(new MenuHolder(), 45, "§8Ulepszanie: " + type.displayName);
         GuiBuilder builder = new GuiBuilder(gui);
         builder.fill(new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).name(" ").build());
 
@@ -99,7 +99,7 @@ public class IslandTypeUpgradeGui {
             }
         }
 
-        builder.set(49, new ItemBuilder(Material.ARROW)
+        builder.set(40, new ItemBuilder(Material.ARROW)
                 .name("§cCofnij")
                 .setString("action", "IslandTypeOpenSettings")
                 .setString("island_type", type.name())

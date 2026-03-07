@@ -134,7 +134,6 @@ public class IslandManager {
             currentIndex++;
         }
 
-        // Jeden zapis zamiast dwóch osobnych (setCurrentIndex + setFreeIndexes)
         storage.saveIndexState(IslandType.OVERWORLD, currentIndex, freeIndexes);
 
         int[] spiral = SpiralCalculator.getSpiralPosition(index);
@@ -217,7 +216,7 @@ public class IslandManager {
         }
 
         int minY    = world.getMinHeight();
-        int maxY    = world.getMaxHeight(); // obsługuje 1.18+ (do 320)
+        int maxY    = world.getMaxHeight();
         int maxR    = 10;
         int maxYOff = 20;
 
@@ -232,7 +231,7 @@ public class IslandManager {
                 for (int r = 0; r <= maxR; r++) {
                     for (int dx = -r; dx <= r; dx++) {
                         for (int dz = -r; dz <= r; dz++) {
-                            if (Math.abs(dx) != r && Math.abs(dz) != r) continue; // tylko brzeg kwadratu
+                            if (Math.abs(dx) != r && Math.abs(dz) != r) continue;
 
                             Location check = new Location(world,
                                     currentHome.getBlockX() + dx,
@@ -288,7 +287,6 @@ public class IslandManager {
         pendingDeletes.add(uuid);
         stark.skyBlockTest2.util.ChatUtil.sendDeleteConfirmMessage(player);
 
-        // Auto-usunięcie po 60 sekundach
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (pendingDeletes.remove(uuid)) {
                 if (player.isOnline()) player.sendMessage("§7Potwierdzenie usunięcia wyspy wygasło.");
@@ -319,18 +317,55 @@ public class IslandManager {
             return;
         }
 
+        // Wyrejestrowanie OVERWORLD
         playerToIsland.remove(ownerUUID);
         for (UUID memberUUID : island.getMembers()) {
             playerToIsland.remove(memberUUID);
         }
         islandGrid.remove(getGridKey(island.getCenter()));
 
+        // Teleport + czyszczenie OVERWORLD
         teleportEveryoneFromIsland(island);
         generator.clearIsland(island, freeIndexes,
                 () -> storage.saveIndexState(IslandType.OVERWORLD, currentIndex, freeIndexes));
         storage.deleteIsland(ownerUUID, IslandType.OVERWORLD);
 
-        player.sendMessage("§cWyspa została usunięta!");
+        // -----------------------------------------------------------------
+        // [POPRAWKA BUG #4 + #5] — kasowanie wysp dodatkowych (Nether itp.)
+        // -----------------------------------------------------------------
+        for (IslandType secType : IslandType.values()) {
+            if (secType == IslandType.OVERWORLD) continue;
+
+            Map<UUID, Island> secMap = secondaryIslands.get(secType);
+            if (secMap == null) continue;
+
+            Island secIsland = secMap.remove(ownerUUID);
+            if (secIsland == null) continue; // gracz nie miał tej wyspy — pomijamy
+
+            // Usuń z gridu
+            Map<Long, Island> grid = secondaryGrids.get(secType);
+            if (grid != null) grid.remove(getGridKey(secIsland.getCenter()));
+
+            // Teleportuj graczy przebywających na wyspie Nether (BUG #5)
+            teleportEveryoneFromIsland(secIsland);
+
+            // Wyczyść obszar i zwolnij indeks
+            List<Integer> free = secondaryFreeIdxs.get(secType);
+            final IslandType capturedType = secType;
+            generator.clearIsland(secIsland, free,
+                    () -> storage.saveIndexState(
+                            capturedType,
+                            secondaryIndexes.get(capturedType),
+                            free));
+
+            // Usuń z pliku
+            storage.deleteIsland(ownerUUID, secType);
+
+            plugin.getLogger().info("[IslandManager] Usunięto " + secType.displayName
+                    + " gracza " + ownerUUID);
+        }
+
+        player.sendMessage("§cWyspa i wszystkie powiązane wyspy zostały usunięte!");
     }
 
     private void teleportEveryoneFromIsland(Island island) {
@@ -348,10 +383,7 @@ public class IslandManager {
 
     public void banPlayer(Player executor, String targetName) {
         Island island = islandsByOwner.get(executor.getUniqueId());
-
-        // Sprawdź czy executor ma wyspę i odpowiednią rolę
         if (island == null) {
-            // Może być co-leader — szukamy jego wyspy
             island = playerToIsland.get(executor.getUniqueId());
         }
         if (island == null) {
@@ -365,7 +397,6 @@ public class IslandManager {
             return;
         }
 
-        // Znajdź cel
         org.bukkit.OfflinePlayer target = Bukkit.getOfflinePlayerIfCached(targetName);
         if (target == null) {
             executor.sendMessage("§cNie znaleziono gracza §e" + targetName + "§c.");
@@ -389,10 +420,8 @@ public class IslandManager {
 
         island.banPlayer(targetUUID);
         storage.saveIsland(island, IslandType.OVERWORLD);
-
         executor.sendMessage("§aGracz §e" + targetName + " §azostał zbanowany na wyspie.");
 
-        // Jeśli online — teleportuj natychmiast
         Player targetPlayer = Bukkit.getPlayer(targetUUID);
         if (targetPlayer != null && island.isInside(targetPlayer.getLocation())) {
             teleportManager.teleportWithoutDelay(targetPlayer);
@@ -432,7 +461,6 @@ public class IslandManager {
     // -------------------------------------------------------------------------
 
     public void setCoLeader(Player owner, UUID targetUUID) {
-        // Sprawdź czy wykonujący jest właścicielem
         Island island = islandsByOwner.get(owner.getUniqueId());
         if (island == null) {
             owner.sendMessage("§cTylko właściciel wyspy może nadawać rolę Co-Leader!");
@@ -444,7 +472,6 @@ public class IslandManager {
             return;
         }
 
-        // Nie można nadać Co-Leadera samemu sobie
         if (targetUUID.equals(owner.getUniqueId())) {
             owner.sendMessage("§cNie możesz nadać sobie tej roli!");
             return;
@@ -454,14 +481,12 @@ public class IslandManager {
         if (name == null) name = targetUUID.toString().substring(0, 8);
 
         if (island.getRole(targetUUID) == IslandRole.CO_LEADER) {
-            // Odbieramy rolę
             island.setRole(targetUUID, IslandRole.MEMBER);
             storage.saveIsland(island, IslandType.OVERWORLD);
             owner.sendMessage("§7Gracz §e" + name + " §7stracił rolę §eCo-Leader§7.");
             Player tp = Bukkit.getPlayer(targetUUID);
             if (tp != null) tp.sendMessage("§7Twoja rola na wyspie została zmieniona na §7Członek§7.");
         } else {
-            // Nadajemy rolę
             island.setRole(targetUUID, IslandRole.CO_LEADER);
             storage.saveIsland(island, IslandType.OVERWORLD);
             owner.sendMessage("§aGracz §e" + name + " §aotrzymał rolę §eCo-Leader§a!");
@@ -470,102 +495,11 @@ public class IslandManager {
         }
     }
 
-    /**
-     * Szukamy właściciela po nazwie tylko wśród załadowanych wysp — bez odpytywania Mojang API.
-     * Dzięki temu nie blokujemy głównego wątku.
-     */
-    public void teleportToIsland(Player visitor, String targetOwnerName) {
-        // Szukamy wyspy po nazwie właściciela wśród załadowanych danych (bez Bukkit.getOfflinePlayer)
-        Island targetIsland = null;
-        UUID targetOwnerUUID = null;
-
-        for (Map.Entry<UUID, Island> entry : islandsByOwner.entrySet()) {
-            org.bukkit.OfflinePlayer op = Bukkit.getOfflinePlayer(entry.getKey());
-            if (targetOwnerName.equalsIgnoreCase(op.getName())) {
-                targetIsland = entry.getValue();
-                targetOwnerUUID = entry.getKey();
-                break;
-            }
-        }
-
-        if (targetIsland == null) {
-            visitor.sendMessage("§cNie znaleziono gracza o takiej nazwie lub nie posiada wyspy.");
-            return;
-        }
-
-        // Właściciel lub członek — standardowy home
-        if (targetIsland.isMember(visitor.getUniqueId())) {
-            teleportHome(visitor);
-            return;
-        }
-
-        // Sprawdź ban
-        if (targetIsland.isBanned(visitor.getUniqueId())) {
-            visitor.sendMessage("§cJesteś zbanowany na tej wyspie.");
-            return;
-        }
-
-        // Wyspa prywatna
-        if (!targetIsland.canVisitorDo(IslandAction.TELEPORT_VISIT)) {
-            visitor.sendMessage("§cTa wyspa jest prywatna. Właściciel zablokował odwiedziny.");
-            return;
-        }
-
-        if (!isLocationSafe(targetIsland.getHome())) {
-            visitor.sendMessage("§cPunkt domowy tej wyspy jest niebezpieczny. Nie można się przeteleportować.");
-            return;
-        }
-
-        visitor.teleport(targetIsland.getHome());
-        visitor.sendMessage("§aTeleportowano na wyspę gracza §e" + targetOwnerName);
-
-        Player ownerOnline = Bukkit.getPlayer(targetOwnerUUID);
-        if (ownerOnline != null) {
-            ownerOnline.sendMessage("§7Gracz §e" + visitor.getName() + " §7odwiedził Twoją wyspę.");
-        }
-    }
-
-    // -------------------------------------------------------------------------
-    // Lokalizacja
-    // -------------------------------------------------------------------------
-
-    public boolean isOnOwnIsland(Player player, Location location) {
-        Island island = getIsland(player.getUniqueId());
-        if (island == null) return false;
-        return island.isInside(location);
-    }
-
-    public Island getIslandAt(Location location) {
-        if (location == null || location.getWorld() == null) return null;
-        String worldName = location.getWorld().getName();
-
-        // OVERWORLD
-        if (IslandType.OVERWORLD.worldName.equals(worldName)) {
-            Island island = islandGrid.get(getGridKey(location));
-            if (island != null && island.isInside(location)) return island;
-            return null;
-        }
-
-        // Typy dodatkowe
-        for (IslandType type : IslandType.values()) {
-            if (type == IslandType.OVERWORLD) continue;
-            if (type.worldName.equals(worldName)) {
-                Map<Long, Island> grid = secondaryGrids.get(type);
-                if (grid == null) return null;
-                Island island = grid.get(getGridKey(location));
-                if (island != null && island.isInside(location)) return island;
-                return null;
-            }
-        }
-        return null;
-    }
-
     // -------------------------------------------------------------------------
     // Zaproszenia
     // -------------------------------------------------------------------------
 
     public void sendInvite(Player sender, Player target) {
-        // Kolejność sprawdzeń: najpierw warunki niezależne od obiektu island (unikamy NPE)
         if (sender.equals(target)) {
             sender.sendMessage("§cNie możesz zaprosić samego siebie!");
             return;
@@ -587,47 +521,44 @@ public class IslandManager {
             return;
         }
 
-        if (hasIsland(target.getUniqueId())) {
-            sender.sendMessage("§cTen gracz ma już wyspę!");
+        if (island.isMember(target.getUniqueId())) {
+            sender.sendMessage("§cTen gracz jest już na Twojej wyspie!");
             return;
         }
 
-        if (pendingInvites.containsKey(target.getUniqueId())) {
-            sender.sendMessage("§cTen gracz ma już oczekujące zaproszenie!");
+        if (island.isBanned(target.getUniqueId())) {
+            sender.sendMessage("§cNie możesz zaprosić zbanowanego gracza!");
             return;
         }
 
         pendingInvites.put(target.getUniqueId(), sender.getUniqueId());
         stark.skyBlockTest2.util.ChatUtil.sendInviteMessage(target, sender.getName());
-        sender.sendMessage("§aWysłano zaproszenie do gracza " + target.getName());
+        sender.sendMessage("§aWysłano zaproszenie do gracza §e" + target.getName() + "§a.");
 
         // Auto-usunięcie po 60 sekundach
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (pendingInvites.remove(target.getUniqueId()) != null) {
-                if (target.isOnline()) target.sendMessage("§cZaproszenie od " + sender.getName() + " wygasło.");
-                if (sender.isOnline()) sender.sendMessage("§cZaproszenie dla " + target.getName() + " wygasło.");
+                if (target.isOnline()) target.sendMessage("§cZaproszenie od §e" + sender.getName() + " §cwygasło.");
+                if (sender.isOnline()) sender.sendMessage("§cZaproszenie dla §e" + target.getName() + " §cwygasło.");
             }
         }, 1200L);
     }
 
     public void acceptInvite(Player player) {
-        UUID playerUUID = player.getUniqueId();
-        UUID ownerUUID  = pendingInvites.remove(playerUUID);
-
+        UUID ownerUUID = pendingInvites.remove(player.getUniqueId());
         if (ownerUUID == null) {
-            player.sendMessage("§cNie masz żadnych oczekujących zaproszeń!");
+            player.sendMessage("§cNie masz aktywnych zaproszeń.");
             return;
         }
 
         Island island = islandsByOwner.get(ownerUUID);
         if (island == null) {
-            player.sendMessage("§cWyspa już nie istnieje.");
+            player.sendMessage("§cWyspa właściciela już nie istnieje.");
             return;
         }
 
-        island.getMembers().add(playerUUID);
-        island.getMemberRoles().remove(playerUUID);  // upewnij się że zaczyna jako MEMBER
-        playerToIsland.put(playerUUID, island);
+        island.getMembers().add(player.getUniqueId());
+        playerToIsland.put(player.getUniqueId(), island);
         storage.saveIsland(island, IslandType.OVERWORLD);
 
         player.sendMessage("§aDołączyłeś do wyspy!");
@@ -662,7 +593,7 @@ public class IslandManager {
         }
 
         island.getMembers().remove(targetUUID);
-        island.getMemberRoles().remove(targetUUID);  // resetuj rolę przy kicku
+        island.getMemberRoles().remove(targetUUID);
         playerToIsland.remove(targetUUID);
         storage.saveIsland(island, IslandType.OVERWORLD);
 
@@ -672,7 +603,6 @@ public class IslandManager {
         Player targetPlayer = Bukkit.getPlayer(targetUUID);
         if (targetPlayer != null) {
             targetPlayer.sendMessage("§cZostałeś wyrzucony z wyspy!");
-            // Teleportuj tylko jeśli stoi na tej wyspie
             if (island.isInside(targetPlayer.getLocation())) {
                 teleportManager.teleportWithoutDelay(targetPlayer);
             }
@@ -694,12 +624,11 @@ public class IslandManager {
 
         Island island = getIsland(playerUUID);
         island.getMembers().remove(playerUUID);
-        island.getMemberRoles().remove(playerUUID);  // resetuj rolę przy opuszczeniu
+        island.getMemberRoles().remove(playerUUID);
         playerToIsland.remove(playerUUID);
         storage.saveIsland(island, IslandType.OVERWORLD);
 
         player.sendMessage("§aOpuściłeś wyspę.");
-        // Teleportuj tylko jeśli stoi na tej wyspie
         if (island.isInside(player.getLocation())) {
             teleportManager.teleportWithoutDelay(player);
         }
@@ -755,33 +684,121 @@ public class IslandManager {
             return;
         }
 
-        // Stary właściciel staje się członkiem, nowy właścicielem
+        // Zamiana ról
         island.getMembers().remove(newOwnerUUID);
         island.getMembers().add(oldOwnerUUID);
         island.setOwner(newOwnerUUID);
+        island.setRole(oldOwnerUUID, IslandRole.MEMBER);
+        island.getMemberRoles().remove(newOwnerUUID);
 
         islandsByOwner.remove(oldOwnerUUID);
         islandsByOwner.put(newOwnerUUID, island);
-
         playerToIsland.put(newOwnerUUID, island);
         playerToIsland.put(oldOwnerUUID, island);
 
-        // Zapis po wszystkich zmianach w pamięci (nie przed, jak było wcześniej)
         storage.saveIsland(island, IslandType.OVERWORLD);
 
-        String newOwnerName = Bukkit.getOfflinePlayer(newOwnerUUID).getName();
-        currentOwner.sendMessage("§aPrzekazałeś lidera graczowi §e" + (newOwnerName != null ? newOwnerName : "Nieznany"));
-
+        currentOwner.sendMessage("§aPrzekazałeś lidera wyspy.");
         Player newOwnerPlayer = Bukkit.getPlayer(newOwnerUUID);
         if (newOwnerPlayer != null) {
-            newOwnerPlayer.sendMessage("§aZostałeś nowym liderem wyspy!");
+            newOwnerPlayer.sendMessage("§aJesteś teraz liderem wyspy!");
         }
     }
 
     // -------------------------------------------------------------------------
-    // Ulepszanie wyspy
+    // Lokalizacja
     // -------------------------------------------------------------------------
 
+    public boolean isOnOwnIsland(Player player, Location location) {
+        Island island = getIsland(player.getUniqueId());
+        if (island == null) return false;
+        return island.isInside(location);
+    }
+
+    public Island getIslandAt(Location location) {
+        if (location == null || location.getWorld() == null) return null;
+        String worldName = location.getWorld().getName();
+
+        // OVERWORLD
+        if (IslandType.OVERWORLD.worldName.equals(worldName)) {
+            Island island = islandGrid.get(getGridKey(location));
+            if (island != null && island.isInside(location)) return island;
+            return null;
+        }
+
+        // Typy dodatkowe
+        for (IslandType type : IslandType.values()) {
+            if (type == IslandType.OVERWORLD) continue;
+            if (type.worldName.equals(worldName)) {
+                Map<Long, Island> grid = secondaryGrids.get(type);
+                if (grid == null) return null;
+                Island island = grid.get(getGridKey(location));
+                if (island != null && island.isInside(location)) return island;
+                return null;
+            }
+        }
+        return null;
+    }
+
+    // -------------------------------------------------------------------------
+    // Odwiedzanie wyspy
+    // -------------------------------------------------------------------------
+
+    public void teleportToIsland(Player visitor, String targetOwnerName) {
+        Island targetIsland = null;
+        UUID targetOwnerUUID = null;
+
+        for (Map.Entry<UUID, Island> entry : islandsByOwner.entrySet()) {
+            org.bukkit.OfflinePlayer op = Bukkit.getOfflinePlayer(entry.getKey());
+            if (targetOwnerName.equalsIgnoreCase(op.getName())) {
+                targetIsland = entry.getValue();
+                targetOwnerUUID = entry.getKey();
+                break;
+            }
+        }
+
+        if (targetIsland == null) {
+            visitor.sendMessage("§cNie znaleziono gracza o takiej nazwie lub nie posiada wyspy.");
+            return;
+        }
+
+        if (targetIsland.isMember(visitor.getUniqueId())) {
+            teleportHome(visitor);
+            return;
+        }
+
+        if (targetIsland.isBanned(visitor.getUniqueId())) {
+            visitor.sendMessage("§cJesteś zbanowany na tej wyspie.");
+            return;
+        }
+
+        if (!targetIsland.canVisitorDo(IslandAction.TELEPORT_VISIT)) {
+            visitor.sendMessage("§cTa wyspa jest prywatna. Właściciel zablokował odwiedziny.");
+            return;
+        }
+
+        if (!isLocationSafe(targetIsland.getHome())) {
+            visitor.sendMessage("§cPunkt domowy tej wyspy jest niebezpieczny. Nie można się przeteleportować.");
+            return;
+        }
+
+        visitor.teleport(targetIsland.getHome());
+        visitor.sendMessage("§aTeleportowano na wyspę gracza §e" + targetOwnerName);
+
+        Player ownerOnline = Bukkit.getPlayer(targetOwnerUUID);
+        if (ownerOnline != null) {
+            ownerOnline.sendMessage("§7Gracz §e" + visitor.getName() + " §7odwiedził Twoją wyspę.");
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Ulepszanie wyspy (OVERWORLD)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Ulepsza wyspę o jeden poziom w górę — wywoływane przez komendę /island upgrade.
+     * Automatycznie wyznacza następny poziom na podstawie aktualnego rozmiaru wyspy.
+     */
     public void upgradeIslandSize(Player player) {
         Island island = islandsByOwner.get(player.getUniqueId());
         if (island == null) {
@@ -789,24 +806,19 @@ public class IslandManager {
             return;
         }
 
-        int currentSize = island.getSize();
-        int nextSize    = -1;
-        int nextLevel   = -1;
-
+        int currentLevel = 1;
         for (int i = 0; i < islandSizes.length; i++) {
-            if (islandSizes[i] > currentSize) {
-                nextSize  = islandSizes[i];
-                nextLevel = i + 1;
-                break;
-            }
+            if (islandSizes[i] == island.getSize()) { currentLevel = i + 1; break; }
         }
 
-        if (nextSize == -1) {
-            player.sendMessage("§cOsiągnąłeś już maksymalny rozmiar wyspy!");
+        int nextLevel = currentLevel + 1;
+        if (nextLevel > islandSizes.length) {
+            player.sendMessage("§cTwoja wyspa jest już na maksymalnym poziomie!");
             return;
         }
 
-        // Sprawdzenie i pobranie opłaty
+        int nextSize = islandSizes[nextLevel - 1];
+
         if (economyManager != null && economyManager.isAvailable()) {
             double cost = getUpgradeCost(nextLevel);
             if (!economyManager.has(player, cost)) {
@@ -825,37 +837,25 @@ public class IslandManager {
                 + (nextSize * 2 + 1) + "x" + (nextSize * 2 + 1) + "§a!");
     }
 
-    /**
-     * Ulepsza wyspę do konkretnego poziomu — wywoływane z GUI.
-     * Sprawdza czy to faktycznie następny poziom (nie można przeskakiwać).
-     */
     public void upgradeIslandToLevel(Player player, int targetLevel) {
         Island island = islandsByOwner.get(player.getUniqueId());
         if (island == null) {
-            player.sendMessage("§cTylko właściciel może ulepszać wyspę!");
+            player.sendMessage("§cMusisz być właścicielem wyspy aby ją ulepszyć!");
             return;
         }
 
-        // Obecny poziom gracza
-        int currentLevel = 1;
-        for (int i = 0; i < islandSizes.length; i++) {
-            if (islandSizes[i] == island.getSize()) { currentLevel = i + 1; break; }
-        }
-
-        // Można kupić tylko następny poziom
+        int currentLevel = getCurrentLevel(player.getUniqueId(), IslandType.OVERWORLD);
         if (targetLevel != currentLevel + 1) {
             player.sendMessage("§cMożesz ulepszyć wyspę tylko o jeden poziom na raz!");
             return;
         }
-
         if (targetLevel < 1 || targetLevel > islandSizes.length) {
             player.sendMessage("§cNieprawidłowy poziom!");
             return;
         }
 
-        // Sprawdzenie ekonomii
         if (economyManager != null && economyManager.isAvailable()) {
-            double cost = getUpgradeCost(targetLevel);
+            double cost = getUpgradeCost(IslandType.OVERWORLD, targetLevel);
             if (!economyManager.has(player, cost)) {
                 player.sendMessage("§cNie masz wystarczających środków! Potrzebujesz §e"
                         + economyManager.format(cost) + "§c.");
@@ -873,9 +873,6 @@ public class IslandManager {
                 + " §a(" + (newSize * 2 + 1) + "x" + (newSize * 2 + 1) + ")§a!");
     }
 
-    /**
-     * Klucz: island.upgrade-costs.<level>
-     */
     public double getUpgradeCost(int level) {
         return getUpgradeCost(IslandType.OVERWORLD, level);
     }
@@ -894,7 +891,6 @@ public class IslandManager {
     private void updateBorderForEveryoneOnIsland(Island island) {
         if (borderManager == null) return;
         for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-            // Island.equals() działa teraz poprawnie (po index) — porównanie jest wiarygodne
             if (island.equals(getIslandAt(onlinePlayer.getLocation()))) {
                 borderManager.updateBorder(onlinePlayer);
             }
@@ -917,6 +913,24 @@ public class IslandManager {
         return map != null ? map.get(uuid) : null;
     }
 
+     // Dzięki temu członkowie mogą teleportować się na Nether wyspy swojego lidera.
+
+    private Island getSecondaryIslandForPlayer(UUID playerUUID, IslandType type) {
+        Map<UUID, Island> map = secondaryIslands.get(type);
+        if (map == null) return null;
+
+        // Gracz jest bezpośrednim właścicielem
+        if (map.containsKey(playerUUID)) {
+            return map.get(playerUUID);
+        }
+
+        // Gracz jest członkiem — pobierz wyspę lidera jego drużyny
+        Island mainIsland = playerToIsland.get(playerUUID);
+        if (mainIsland == null) return null;
+
+        return map.get(mainIsland.getOwner());
+    }
+
     public int getCurrentLevel(UUID uuid, IslandType type) {
         Island island = getIsland(uuid, type);
         if (island == null) return 0;
@@ -934,11 +948,16 @@ public class IslandManager {
         return plugin.getConfig().getDouble(type.configPath + ".upgrade-costs." + level, 0.0);
     }
 
+    /**
+     * [POPRAWKA BUG #3] Zmieniono hasIsland() na isOwner() — tylko właściciel
+     * może kupić wyspę dodatkową; wcześniej każdy członek mógł kupić własną
+     * niezależną wyspę Nether.
+     */
     public void createIsland(Player player, IslandType type) {
         if (type == IslandType.OVERWORLD) { createIsland(player); return; }
 
-        if (!hasIsland(player.getUniqueId())) {
-            player.sendMessage("§cMusisz najpierw posiadać zwykłą wyspę!");
+        if (!isOwner(player.getUniqueId())) {
+            player.sendMessage("§cTylko właściciel wyspy może odblokować " + type.displayName + "!");
             return;
         }
         if (hasIsland(player.getUniqueId(), type)) {
@@ -994,33 +1013,43 @@ public class IslandManager {
         });
     }
 
+    /**
+     * [POPRAWKA BUG #1] Zmieniono getIsland() na getSecondaryIslandForPlayer() —
+     * teraz członkowie drużyny mogą teleportować się na wyspę Nether swojego lidera.
+     */
     public void teleportHome(Player player, IslandType type) {
         if (type == IslandType.OVERWORLD) { teleportHome(player); return; }
 
-        Island island = getIsland(player.getUniqueId(), type);
+        Island island = getSecondaryIslandForPlayer(player.getUniqueId(), type);
         if (island == null) {
-            player.sendMessage("§cNie masz " + type.displayName + "!");
+            player.sendMessage("§cTwoja wyspa nie posiada §e" + type.displayName
+                    + "§c! Właściciel może ją kupić przez §e/island hub§c.");
             return;
         }
         if (!isLocationSafe(island.getHome())) {
-            player.sendMessage("§cTwój dom " + type.displayName
-                    + " jest uszkodzony! Użyj §e/is sethome " + type.name().toLowerCase());
+            player.sendMessage("§cPunkt domowy " + type.displayName
+                    + " jest uszkodzony! Właściciel może go naprawić: §e/is sethome "
+                    + type.name().toLowerCase());
             return;
         }
         player.teleport(island.getHome());
-        player.sendMessage("§aTeleportowano na dom " + type.displayName + ".");
+        player.sendMessage("§aTeleportowano na " + type.displayName + ".");
     }
 
+    /**
+     * [POPRAWKA BUG #2] Zmieniono getIsland() na getSecondaryIslandForPlayer() —
+     * teraz członkowie mogą ustawić punkt domowy na wyspie Nether swojego lidera.
+     */
     public void setHome(Player player, IslandType type) {
         if (type == IslandType.OVERWORLD) { setHome(player); return; }
 
-        Island island = getIsland(player.getUniqueId(), type);
+        Island island = getSecondaryIslandForPlayer(player.getUniqueId(), type);
         if (island == null) {
-            player.sendMessage("§cNie masz " + type.displayName + "!");
+            player.sendMessage("§cTwoja wyspa nie posiada " + type.displayName + "!");
             return;
         }
         if (!island.isInside(player.getLocation())) {
-            player.sendMessage("§cMożesz ustawić dom tylko na terenie własnej " + type.displayName + "!");
+            player.sendMessage("§cMożesz ustawić dom tylko na terenie " + type.displayName + "!");
             return;
         }
         if (!isLocationSafe(player.getLocation())) {
@@ -1098,7 +1127,6 @@ public class IslandManager {
         plugin.getLogger().info("[SkyBlock] Znaleziono " + orphans.size()
                 + " osieroconych obszarów. Czyszczenie zostanie uruchomione za chwilę.");
 
-        // Opóźnienie 1 tick — serwer zdąży dokończyć ładowanie przed czyszczeniem bloków
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             for (Island dummy : orphans) {
                 generator.clearIsland(dummy, freeIndexes,

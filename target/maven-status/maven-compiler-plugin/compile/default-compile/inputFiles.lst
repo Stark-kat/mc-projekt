@@ -32,11 +32,11 @@ C:\Users\Stark\Desktop\pluginy\SkyBlockTest2\src\main\java\stark\skyBlockTest2\i
 C:\Users\Stark\Desktop\pluginy\SkyBlockTest2\src\main\java\stark\skyBlockTest2\island\SchematicManager.java
 C:\Users\Stark\Desktop\pluginy\SkyBlockTest2\src\main\java\stark\skyBlockTest2\island\SpiralCalculator.java
 C:\Users\Stark\Desktop\pluginy\SkyBlockTest2\src\main\java\stark\skyBlockTest2\SkyBlockTest2.java
-C:\Users\Stark\Desktop\pluginy\SkyBlockTest2\src\main\java\stark\skyBlockTest2\Spawn\SetSpawnCommand.java
-C:\Users\Stark\Desktop\pluginy\SkyBlockTest2\src\main\java\stark\skyBlockTest2\Spawn\SpawnCommand.java
-C:\Users\Stark\Desktop\pluginy\SkyBlockTest2\src\main\java\stark\skyBlockTest2\Spawn\TeleportListener.java
-C:\Users\Stark\Desktop\pluginy\SkyBlockTest2\src\main\java\stark\skyBlockTest2\Spawn\TeleportManager.java
+C:\Users\Stark\Desktop\pluginy\SkyBlockTest2\src\main\java\stark\skyBlockTest2\spawn\SetSpawnCommand.java
+C:\Users\Stark\Desktop\pluginy\SkyBlockTest2\src\main\java\stark\skyBlockTest2\spawn\SpawnCommand.java
+C:\Users\Stark\Desktop\pluginy\SkyBlockTest2\src\main\java\stark\skyBlockTest2\teleport\TeleportListener.java
+C:\Users\Stark\Desktop\pluginy\SkyBlockTest2\src\main\java\stark\skyBlockTest2\teleport\TeleportManager.java
 C:\Users\Stark\Desktop\pluginy\SkyBlockTest2\src\main\java\stark\skyBlockTest2\util\ChatUtil.java
 C:\Users\Stark\Desktop\pluginy\SkyBlockTest2\src\main\java\stark\skyBlockTest2\util\CounterMenager.java
 C:\Users\Stark\Desktop\pluginy\SkyBlockTest2\src\main\java\stark\skyBlockTest2\util\JoinMessage.java
-C:\Users\Stark\Desktop\pluginy\SkyBlockTest2\src\main\java\stark\skyBlockTest2\World\WorldManager.java
+C:\Users\Stark\Desktop\pluginy\SkyBlockTest2\src\main\java\stark\skyBlockTest2\world\WorldManager.java
