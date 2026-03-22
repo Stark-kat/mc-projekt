@@ -1,0 +1,626 @@
+# ============================================================
+#   achievements.yml — Definicje osiągnięć z progresywnymi progami
+# ============================================================
+#
+# Triggery: BREAK_BLOCK | KILL_MOB | FISH | CRAFT_ITEM | PLACE_BLOCK | SMELT_ITEM
+#            TRADE | SEND_CHAT | INVITE_MEMBER | VISIT_ISLAND | AUCTION_SOLD | AUCTION_WON
+#            UNLOCK_NETHER | EAT_FOOD | SURVIVE_FALL | COMPLETE_DAILY_QUEST_SET
+#            COMPLETE_WEEKLY_QUEST_SET | OPEN_CRATE | UPGRADE_GENERATOR
+#            SELL_TO_SHOP | EXPAND_ISLAND
+#
+# target: nazwa materiału/entity lub "" = dowolny
+# tiers:  kolejne progi; klucze (1, 2, 3...) MUSZĄ być posortowane
+#         rosnąco po polu "amount" — plugin sam to gwarantuje
+# ============================================================
+
+achievements:
+
+  # --- TUTORIAL ---
+
+  # Przykład osiągnięcia MULTI-TARGET:
+  # Gracz musi skraftować stół rzemieślniczy, piec i skrzynię — w dowolnej kolejności.
+  # Każdy tier może mieć własny zestaw wymagań (tu: ten sam zestaw z rosnącymi ilościami).
+  #
+  # Format multi-target: zamiast "target" + "amount" w tierze używamy sekcji "targets":
+  #   targets:
+  #     MATERIAL_NAME: wymagana_ilosc
+  #
+
+  mine_wood:
+    category: "Tutorial"
+    display-name: "Pierwsze drzewo"
+    description: "Wytnij pierwsze drzewa na wyspie"
+    trigger: BREAK_BLOCK
+    target: OAK_LOG
+    icon: OAK_LOG
+    tiers:
+      t1: { amount: 4, xp-reward: 25 }
+
+  starter_tools:
+    category: "Tutorial"
+    display-name: "Pierwsze kroki"
+    description: "Zbuduj podstawowe narzędzia przeżycia na wyspie"
+    trigger: CRAFT_ITEM
+    icon: CRAFTING_TABLE
+    tiers:
+      t1:
+        xp-reward: 200
+        targets:
+          CRAFTING_TABLE: 1
+          FURNACE: 1
+          CHEST: 1
+
+  craft_wooden_pickaxe:
+    category: "Tutorial"
+    display-name: "Pierwsze narzędzie"
+    description: "Stwórz drewniany kilof"
+    trigger: CRAFT_ITEM
+    target: WOODEN_PICKAXE
+    icon: WOODEN_PICKAXE
+    tiers:
+      t1: { amount: 1, xp-reward: 30 }
+
+  break_cobblestone:
+    category: "Tutorial"
+    display-name: "Górnik-amator"
+    description: "Wykop trochę bruku z generatora"
+    trigger: BREAK_BLOCK
+    target: COBBLESTONE
+    icon: COBBLESTONE
+    tiers:
+      t1: { amount: 30, xp-reward: 100 }
+
+  smelt_iron:
+    category: "Tutorial"
+    display-name: "Pierwszy metal"
+    description: "Wytop żelazo w piecu"
+    trigger: SMELT_ITEM
+    target: IRON_INGOT
+    icon: IRON_INGOT
+    tiers:
+      t1: { amount: 3, xp-reward: 120 }
+
+  craft_stone_pickaxe:
+    category: "Tutorial"
+    display-name: "Upgrade!"
+    description: "Stwórz kamienny kilof"
+    trigger: CRAFT_ITEM
+    target: STONE_PICKAXE
+    icon: STONE_PICKAXE
+    tiers:
+      t1: { amount: 1, xp-reward: 80 }
+
+  kill_first_mob:
+    category: "Tutorial"
+    display-name: "Obrońca wyspy"
+    description: "Zabij potwora na swojej wyspie"
+    trigger: KILL_MOB
+    target: ZOMBIE
+    icon: ROTTEN_FLESH
+    tiers:
+      t1: { amount: 1, xp-reward: 60 }
+
+  place_first_block:
+    category: "Tutorial"
+    display-name: "Budowniczy"
+    description: "Postaw blok i zacznij budować"
+    trigger: PLACE_BLOCK
+    target: COBBLESTONE
+    icon: COBBLESTONE
+    tiers:
+      t1: { amount: 10, xp-reward: 40 }
+
+  upgrade_cobblestone_gen:
+    category: "Tutorial"
+    display-name: "Ulepszony Generator"
+    description: "Ulepsz generator Cobblestone do poziomu 2"
+    trigger: UPGRADE_GENERATOR
+    target: COBBLESTONE
+    icon: PISTON
+    tiers:
+      t1: { amount: 1, xp-reward: 150 }
+
+  # ============================================================
+  # Kategoria: Gornik
+  # ============================================================
+
+  mine_stone:
+    category: "Gornik"
+    display-name: "Kamieniarz"
+    description: "Wykopuj kamien na swojej wyspie"
+    trigger: BREAK_BLOCK
+    target: STONE
+    icon: STONE
+    tiers:
+      t1: { amount: 100,  xp-reward: 50  }
+      t2: { amount: 1000, xp-reward: 200 }
+      t3: { amount: 5000, xp-reward: 500, item-rewards: ["custom:book_efficiency_5"] }
+
+  mine_diamond_ore:
+    category: "Gornik"
+    display-name: "Lowca Diamentow"
+    description: "Wykopuj rude diamentow (wymaga Fortune/Silk Touch)"
+    trigger: BREAK_BLOCK
+    target: DIAMOND_ORE
+    icon: DIAMOND_ORE
+    tiers:
+      t1: { amount: 5,   xp-reward: 150  }
+      t2: { amount: 50,  xp-reward: 600  }
+      t3: { amount: 200, xp-reward: 1500, item-rewards: ["DIAMOND:5"] }
+
+  mine_total:
+    category: "Gornik"
+    display-name: "Demolka"
+    description: "Lacznie wykopane bloki dowolnego rodzaju"
+    trigger: BREAK_BLOCK
+    target: ""
+    icon: IRON_PICKAXE
+    tiers:
+      t1: { amount: 500,    xp-reward: 75   }
+      t2: { amount: 5000,   xp-reward: 300  }
+      t3: { amount: 25000,  xp-reward: 800  }
+      t4: { amount: 100000, xp-reward: 2000, item-rewards: ["custom:book_fortune_3"] }
+
+  # ============================================================
+  # Kategoria: Wojownik
+  # ============================================================
+
+  kill_zombie:
+    category: "Wojownik"
+    display-name: "Lowca Zombie"
+    description: "Zabijaj zombie na swojej wyspie"
+    trigger: KILL_MOB
+    target: ZOMBIE
+    icon: ROTTEN_FLESH
+    tiers:
+      t1: { amount: 50,   xp-reward: 100  }
+      t2: { amount: 500,  xp-reward: 400  }
+      t3: { amount: 2000, xp-reward: 1000, item-rewards: ["custom:spawner_zombie"] }
+
+  kill_blaze:
+    category: "Wojownik"
+    display-name: "Pogromca Plomieni"
+    description: "Zabijaj blazy w Netherze"
+    trigger: KILL_MOB
+    target: BLAZE
+    icon: BLAZE_ROD
+    tiers:
+      t1: { amount: 25,   xp-reward: 150  }
+      t2: { amount: 200,  xp-reward: 600  }
+      t3: { amount: 1000, xp-reward: 2000, item-rewards: ["custom:spawner_blaze"] }
+
+  kill_total:
+    category: "Wojownik"
+    display-name: "Rzeznik"
+    description: "Lacznie zabite moby dowolnego rodzaju"
+    trigger: KILL_MOB
+    target: ""
+    icon: IRON_SWORD
+    tiers:
+      t1: { amount: 100,  xp-reward: 100  }
+      t2: { amount: 1000, xp-reward: 400  }
+      t3: { amount: 5000, xp-reward: 1000, item-rewards: ["custom:book_sharpness_5"] }
+
+  # ============================================================
+  # Kategoria: Rybak
+  # ============================================================
+
+  fish_total:
+    category: "Rybak"
+    display-name: "Wedkarz"
+    description: "Low ryby i przedmioty wedka"
+    trigger: FISH
+    target: ""
+    icon: FISHING_ROD
+    tiers:
+      t1: { amount: 10,   xp-reward: 50   }
+      t2: { amount: 100,  xp-reward: 200  }
+      t3: { amount: 500,  xp-reward: 600  }
+      t4: { amount: 1500, xp-reward: 1500, item-rewards: ["custom:book_looting_3"] }
+
+  # ============================================================
+  # Kategoria: Rzemieslnik
+  # ============================================================
+
+  craft_total:
+    category: "Rzemieslnik"
+    display-name: "Rzemieslnik"
+    description: "Craftuj przedmioty na stole rzemiosla"
+    trigger: CRAFT_ITEM
+    target: ""
+    icon: CRAFTING_TABLE
+    tiers:
+      t1: { amount: 50,    xp-reward: 75   }
+      t2: { amount: 500,   xp-reward: 300  }
+      t3: { amount: 2000,  xp-reward: 800  }
+      t4: { amount: 10000, xp-reward: 2000, item-rewards: ["custom:book_silk_touch"] }
+
+  # ============================================================
+  # Kategoria: Questy
+  # Triggery COMPLETE_DAILY_QUEST_SET i COMPLETE_WEEKLY_QUEST_SET
+  # odpalaja sie automatycznie gdy wyspa ukonczy caly zestaw questow.
+  # ============================================================
+
+  complete_daily_sets:
+    category: "Questy"
+    display-name: "Sumienny Pracownik"
+    description: "Ukonczono cale zestawy dziennych questow"
+    trigger: COMPLETE_DAILY_QUEST_SET
+    target: ""
+    icon: SUNFLOWER
+    tiers:
+      t1: { amount: 5,   xp-reward: 200  }
+      t2: { amount: 20,  xp-reward: 800  }
+      t3: { amount: 50,  xp-reward: 2000 }
+      t4: { amount: 100, xp-reward: 5000, item-rewards: ["custom:book_sharpness_5"] }
+
+  complete_weekly_sets:
+    category: "Questy"
+    display-name: "Tygodniowy Mistrz"
+    description: "Ukonczono cale zestawy tygodniowych questow"
+    trigger: COMPLETE_WEEKLY_QUEST_SET
+    target: ""
+    icon: CLOCK
+    tiers:
+      t1: { amount: 3,  xp-reward: 500   }
+      t2: { amount: 10, xp-reward: 2000  }
+      t3: { amount: 30, xp-reward: 5000  }
+      t4: { amount: 50, xp-reward: 10000, item-rewards: ["custom:book_protection_4"] }
+
+  # ============================================================
+  # Kategoria: Skrzynki
+  # ============================================================
+
+  open_crates:
+    category: "Skrzynki"
+    display-name: "Hazardzista"
+    description: "Otwieraj skrzynki z lupami"
+    trigger: OPEN_CRATE
+    target: ""
+    icon: CHEST
+    tiers:
+      t1: { amount: 5,   xp-reward: 100  }
+      t2: { amount: 25,  xp-reward: 400  }
+      t3: { amount: 100, xp-reward: 1200, item-rewards: ["custom:book_fortune_3"] }
+
+  # ============================================================
+  # Kategoria: Gornik (dodatkowe)
+  # ============================================================
+
+  mine_coal_ore:
+    category: "Gornik"
+    display-name: "Weglarz"
+    description: "Wykopuj rudy wegla na swojej wyspie"
+    trigger: BREAK_BLOCK
+    target: COAL_ORE
+    icon: COAL_ORE
+    tiers:
+      t1: { amount: 100,  xp-reward: 40  }
+      t2: { amount: 1000, xp-reward: 150 }
+      t3: { amount: 5000, xp-reward: 400 }
+
+  mine_iron_ore:
+    category: "Gornik"
+    display-name: "Zelazny Gornik"
+    description: "Wykopuj rudy zelaza na swojej wyspie"
+    trigger: BREAK_BLOCK
+    target: IRON_ORE
+    icon: IRON_ORE
+    tiers:
+      t1: { amount: 50,   xp-reward: 60   }
+      t2: { amount: 500,  xp-reward: 250  }
+      t3: { amount: 3000, xp-reward: 700, item-rewards: ["IRON_INGOT:32"] }
+
+  mine_obsidian:
+    category: "Gornik"
+    display-name: "Kruszciel Obsydianu"
+    description: "Wykopuj obsydian — ten twardy materiał nie odpuszcza"
+    trigger: BREAK_BLOCK
+    target: OBSIDIAN
+    icon: OBSIDIAN
+    tiers:
+      t1: { amount: 10,  xp-reward: 80   }
+      t2: { amount: 100, xp-reward: 350  }
+      t3: { amount: 500, xp-reward: 900, item-rewards: ["custom:book_efficiency_5"] }
+
+  # ============================================================
+  # Kategoria: Wojownik (dodatkowe)
+  # ============================================================
+
+  kill_skeleton:
+    category: "Wojownik"
+    display-name: "Lowca Szkieletow"
+    description: "Zabijaj szkielety na swojej wyspie"
+    trigger: KILL_MOB
+    target: SKELETON
+    icon: BONE
+    tiers:
+      t1: { amount: 50,   xp-reward: 80   }
+      t2: { amount: 500,  xp-reward: 300  }
+      t3: { amount: 2000, xp-reward: 800, item-rewards: ["BONE:32"] }
+
+  kill_creeper:
+    category: "Wojownik"
+    display-name: "Pogromca Creepera"
+    description: "Zabijaj creepery bez eksplozji"
+    trigger: KILL_MOB
+    target: CREEPER
+    icon: GUNPOWDER
+    tiers:
+      t1: { amount: 50,   xp-reward: 100  }
+      t2: { amount: 300,  xp-reward: 400  }
+      t3: { amount: 1000, xp-reward: 1000, item-rewards: ["GUNPOWDER:32"] }
+
+  kill_spider:
+    category: "Wojownik"
+    display-name: "Pajecznik"
+    description: "Zabijaj pająki na swojej wyspie"
+    trigger: KILL_MOB
+    target: SPIDER
+    icon: SPIDER_EYE
+    tiers:
+      t1: { amount: 50,   xp-reward: 70   }
+      t2: { amount: 300,  xp-reward: 280  }
+      t3: { amount: 1000, xp-reward: 700  }
+
+  kill_enderman:
+    category: "Wojownik"
+    display-name: "Przyjaciel z Endu"
+    description: "Zabijaj endermany"
+    trigger: KILL_MOB
+    target: ENDERMAN
+    icon: ENDER_PEARL
+    tiers:
+      t1: { amount: 25,  xp-reward: 200  }
+      t2: { amount: 200, xp-reward: 800  }
+      t3: { amount: 800, xp-reward: 2000, item-rewards: ["ENDER_PEARL:16"] }
+
+  # ============================================================
+  # Kategoria: Rybak (dodatkowe)
+  # ============================================================
+
+  fish_salmon:
+    category: "Rybak"
+    display-name: "Losos na Obiad"
+    description: "Zlap lososia wedka"
+    trigger: FISH
+    target: SALMON
+    icon: SALMON
+    tiers:
+      t1: { amount: 10,  xp-reward: 60   }
+      t2: { amount: 100, xp-reward: 250  }
+      t3: { amount: 500, xp-reward: 700  }
+
+  # ============================================================
+  # Kategoria: Budowniczy
+  # ============================================================
+
+  place_total:
+    category: "Budowniczy"
+    display-name: "Architekt"
+    description: "Postaw bloki na swojej wyspie"
+    trigger: PLACE_BLOCK
+    target: ""
+    icon: BRICKS
+    tiers:
+      t1: { amount: 500,    xp-reward: 75    }
+      t2: { amount: 5000,   xp-reward: 300   }
+      t3: { amount: 25000,  xp-reward: 800   }
+      t4: { amount: 100000, xp-reward: 2000, item-rewards: ["custom:book_efficiency_5"] }
+
+  # ============================================================
+  # Kategoria: Hutnik
+  # ============================================================
+
+  smelt_total:
+    category: "Hutnik"
+    display-name: "Mistrz Pieca"
+    description: "Wytop przedmioty w piecu"
+    trigger: SMELT_ITEM
+    target: ""
+    icon: FURNACE
+    tiers:
+      t1: { amount: 50,   xp-reward: 60   }
+      t2: { amount: 500,  xp-reward: 250  }
+      t3: { amount: 5000, xp-reward: 700  }
+
+  smelt_iron_baron:
+    category: "Hutnik"
+    display-name: "Zelazny Baron"
+    description: "Wytop sztabki zelaza w piecu"
+    trigger: SMELT_ITEM
+    target: IRON_INGOT
+    icon: IRON_INGOT
+    tiers:
+      t1: { amount: 50,   xp-reward: 80   }
+      t2: { amount: 500,  xp-reward: 350  }
+      t3: { amount: 2000, xp-reward: 900, item-rewards: ["IRON_INGOT:32"] }
+
+  # ============================================================
+  # Kategoria: Kupiec (handel z wiesniakiem)
+  # ============================================================
+
+  trade_villager:
+    category: "Kupiec"
+    display-name: "Handlarz"
+    description: "Handluj z wiesniakami"
+    trigger: TRADE
+    target: ""
+    icon: EMERALD
+    tiers:
+      t1: { amount: 10,  xp-reward: 100  }
+      t2: { amount: 100, xp-reward: 500  }
+      t3: { amount: 500, xp-reward: 1500, item-rewards: ["EMERALD:16"] }
+
+  # ============================================================
+  # Kategoria: Spolecznik
+  # ============================================================
+
+  send_chat:
+    category: "Spolecznik"
+    display-name: "Gadula"
+    description: "Pisz wiadomosci na czacie"
+    trigger: SEND_CHAT
+    target: ""
+    icon: PAPER
+    tiers:
+      t1: { amount: 100,   xp-reward: 50    }
+      t2: { amount: 1000,  xp-reward: 200   }
+      t3: { amount: 10000, xp-reward: 600   }
+
+  invite_member:
+    category: "Spolecznik"
+    display-name: "Rekruter"
+    description: "Zaproś graczy do swojej wyspy — im więcej, tym weselej"
+    trigger: INVITE_MEMBER
+    target: ""
+    icon: PLAYER_HEAD
+    tiers:
+      t1: { amount: 1,  xp-reward: 150  }
+      t2: { amount: 5,  xp-reward: 600  }
+      t3: { amount: 10, xp-reward: 1500, item-rewards: ["DIAMOND:3"] }
+
+  visit_island:
+    category: "Spolecznik"
+    display-name: "Turysta"
+    description: "Odwiedzaj wyspy innych graczy (/is visit <nick>)"
+    trigger: VISIT_ISLAND
+    target: ""
+    icon: COMPASS
+    tiers:
+      t1: { amount: 5,   xp-reward: 100  }
+      t2: { amount: 25,  xp-reward: 400  }
+      t3: { amount: 100, xp-reward: 1200, item-rewards: ["COMPASS:1"] }
+
+  # ============================================================
+  # Kategoria: Dom Aukcyjny
+  # ============================================================
+
+  auction_sold_count:
+    category: "Dom Aukcyjny"
+    display-name: "Sprzedawca"
+    description: "Sprzedaj przedmioty na domu aukcyjnym"
+    trigger: AUCTION_SOLD
+    target: "TRANSACTION"
+    icon: GOLD_INGOT
+    tiers:
+      t1: { amount: 5,   xp-reward: 150  }
+      t2: { amount: 25,  xp-reward: 600  }
+      t3: { amount: 100, xp-reward: 2000, item-rewards: ["GOLD_INGOT:16"] }
+
+  auction_sold_value:
+    category: "Dom Aukcyjny"
+    display-name: "Magnat"
+    description: "Sprzedaj przedmioty o lacznej wartosci na aukcjach"
+    trigger: AUCTION_SOLD
+    target: "VALUE"
+    icon: DIAMOND
+    tiers:
+      t1: { amount: 1000,    xp-reward: 200   }
+      t2: { amount: 10000,   xp-reward: 800   }
+      t3: { amount: 100000,  xp-reward: 3000, item-rewards: ["DIAMOND:5"] }
+
+  auction_won:
+    category: "Dom Aukcyjny"
+    display-name: "Licytant"
+    description: "Wygrywaj aukcje licytacyjne"
+    trigger: AUCTION_WON
+    target: ""
+    icon: EMERALD
+    tiers:
+      t1: { amount: 3,  xp-reward: 200  }
+      t2: { amount: 15, xp-reward: 800  }
+      t3: { amount: 50, xp-reward: 2500, item-rewards: ["EMERALD:8"] }
+
+  # ============================================================
+  # Kategoria: Odkrywca
+  # ============================================================
+
+  unlock_nether:
+    category: "Odkrywca"
+    display-name: "Podruznik do Piekla"
+    description: "Odblokuj swoja wyspę Netheru"
+    trigger: UNLOCK_NETHER
+    target: ""
+    icon: NETHERRACK
+    tiers:
+      t1: { amount: 1, xp-reward: 500, item-rewards: ["BLAZE_ROD:8"] }
+
+  # ============================================================
+  # Kategoria: Ryzykant
+  # ============================================================
+
+  survive_fall:
+    category: "Ryzykant"
+    display-name: "Kocur"
+    description: "Przezywaj upadki zadajace powazne obrazenia (bez wody!)"
+    trigger: SURVIVE_FALL
+    target: ""
+    icon: FEATHER
+    tiers:
+      t1: { amount: 10,  xp-reward: 100  }
+      t2: { amount: 50,  xp-reward: 400  }
+      t3: { amount: 200, xp-reward: 1200, item-rewards: ["FEATHER:32"] }
+
+  # ============================================================
+  # Kategoria: Smakosz
+  # ============================================================
+
+  eat_cake:
+    category: "Smakosz"
+    display-name: "Urodzinowy"
+    description: "Zjedz tort — bo kazdy dzien to cos do swietowania"
+    trigger: EAT_FOOD
+    target: "CAKE"
+    icon: CAKE
+    tiers:
+      t1: { amount: 1,  xp-reward: 100  }
+      t2: { amount: 10, xp-reward: 400  }
+      t3: { amount: 50, xp-reward: 1200, item-rewards: ["CAKE:1"] }
+
+  # ============================================================
+  # Kategoria: Sklep
+  # ============================================================
+
+  shop_sell_count:
+    category: "Sklep"
+    display-name: "Sprzedawca Wyspy"
+    description: "Sprzedawaj przedmioty w sklepie wyspy"
+    trigger: SELL_TO_SHOP
+    target: "TRANSACTION"
+    icon: EMERALD
+    tiers:
+      t1: { amount: 10,   xp-reward: 75   }
+      t2: { amount: 100,  xp-reward: 300  }
+      t3: { amount: 500,  xp-reward: 800  }
+      t4: { amount: 2000, xp-reward: 2000, item-rewards: ["EMERALD:8"] }
+
+  shop_sell_value:
+    category: "Sklep"
+    display-name: "Bogacz"
+    description: "Zarabiaj złoto sprzedając przedmioty w sklepie wyspy"
+    trigger: SELL_TO_SHOP
+    target: "VALUE"
+    icon: GOLD_INGOT
+    tiers:
+      t1: { amount: 1000,    xp-reward: 100   }
+      t2: { amount: 10000,   xp-reward: 400   }
+      t3: { amount: 100000,  xp-reward: 1200  }
+      t4: { amount: 1000000, xp-reward: 4000, item-rewards: ["GOLD_INGOT:32"] }
+
+  # ============================================================
+  # Kategoria: Wyspa
+  # ============================================================
+
+  expand_island:
+    category: "Wyspa"
+    display-name: "Wielka Wyspa"
+    description: "Powiększ swoją wyspę — niebo to nie limit"
+    trigger: EXPAND_ISLAND
+    target: ""
+    icon: GRASS_BLOCK
+    tiers:
+      t1: { amount: 1, xp-reward: 300  }
+      t2: { amount: 2, xp-reward: 600  }
+      t3: { amount: 3, xp-reward: 1000 }
+      t4: { amount: 4, xp-reward: 2000, item-rewards: ["DIAMOND:3"] }

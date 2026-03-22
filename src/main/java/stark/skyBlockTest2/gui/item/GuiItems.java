@@ -171,4 +171,17 @@ public class GuiItems {
         IslandRole role = isOwner ? IslandRole.OWNER : IslandRole.MEMBER;
         return playerHead(player, role);
     }
+
+    public static ItemStack quests() {
+        return new ItemBuilder(Material.WRITABLE_BOOK)
+                .name("§e§lQuesty i Osiagniecia")
+                .lore(
+                        "§7Przegladaj dzienne i tygodniowe",
+                        "§7questy oraz osiagniecia wyspy.",
+                        " ",
+                        "§aKliknij, aby otworzyc!"
+                )
+                .setString("action", "OpenQuestsMenu")  // ← zmiana z "OpenQuests"
+                .build();
+    }
 }

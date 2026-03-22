@@ -31,7 +31,7 @@ public class IslandTypeSettingsGui {
         builder.fill(new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).name(" ").build());
 
         // Info o wyspie
-        builder.set(11, new ItemBuilder(type.icon)
+        builder.set(10, new ItemBuilder(type.icon)
                 .name("§a§l" + type.displayName)
                 .lore(
                         "§7Poziom: §e" + level,
@@ -41,18 +41,26 @@ public class IslandTypeSettingsGui {
                 .build());
 
         // Teleport home
-        builder.set(13, new ItemBuilder(Material.ENDER_PEARL)
+        builder.set(12, new ItemBuilder(Material.ENDER_PEARL)
                 .name("§bTeleportuj się")
                 .lore("§7Teleportuj się na swoją wyspę")
                 .setString("action", "IslandTypeTeleportHome")
                 .setString("island_type", type.name())
                 .build());
 
-        // Ulepszanie
-        builder.set(15, new ItemBuilder(Material.DIAMOND_PICKAXE)
-                .name("§eUlepszanie")
-                .lore("§7Kliknij, aby ulepszyć wyspę")
+        // Ulepszanie rozmiaru wyspy
+        builder.set(14, new ItemBuilder(Material.DIAMOND_PICKAXE)
+                .name("§eRozmiar wyspy")
+                .lore("§7Kliknij, aby ulepszyć rozmiar wyspy")
                 .setString("action", "IslandTypeOpenUpgrade")
+                .setString("island_type", type.name())
+                .build());
+
+        // Ulepszanie generatora
+        builder.set(16, new ItemBuilder(Material.FURNACE)
+                .name("§eGenerator")
+                .lore("§7Kliknij, aby ulepszyć generator")
+                .setString("action", "OpenGeneratorUpgrade")
                 .setString("island_type", type.name())
                 .build());
 

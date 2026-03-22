@@ -1,0 +1,103 @@
+# Questy dzienne
+# active: - lista ID aktualnie aktywnych questów (ustawiana automatycznie)
+# next:   - lista ID questów które wejdą przy następnym resecie (ustaw ręcznie)
+# pool:   - wszystkie dostępne questy do losowania
+
+active: []
+
+next: []
+
+pool:
+
+  # ---- Górnicze ----
+  stone_miner:
+    trigger: BREAK_BLOCK
+    target: STONE
+    display-name: "Gornik Kamienia"
+    description: "Wykop kamien na swojej wyspie"
+    icon: STONE
+    amount: 64
+    xp-reward: 100
+    item-rewards:
+      - IRON_INGOT:8
+
+  coal_miner:
+    trigger: BREAK_BLOCK
+    target: COAL_ORE
+    display-name: "Gornik Wegla"
+    description: "Wykop wegiel na swojej wyspie"
+    icon: COAL_ORE
+    amount: 32
+    xp-reward: 120
+    item-rewards:
+      - COAL:16
+
+  iron_miner:
+    trigger: BREAK_BLOCK
+    target: IRON_ORE
+    display-name: "Gornik Zelaza"
+    description: "Wykop rude zelaza"
+    icon: IRON_ORE
+    amount: 16
+    xp-reward: 200
+    item-rewards:
+      - IRON_INGOT:8
+
+  # ---- Walka ----
+  zombie_hunter:
+    trigger: KILL_MOB
+    target: ZOMBIE
+    display-name: "Lowca Zombie"
+    description: "Zabij zombie na swojej wyspie"
+    icon: ROTTEN_FLESH
+    amount: 20
+    xp-reward: 150
+    item-rewards:
+      - ROTTEN_FLESH:16
+
+  skeleton_hunter:
+    trigger: KILL_MOB
+    target: SKELETON
+    display-name: "Lowca Szkieletow"
+    description: "Zabij szkielety na swojej wyspie"
+    icon: BONE
+    amount: 20
+    xp-reward: 150
+    item-rewards:
+      - BONE:16
+      - ARROW:32
+
+  spider_hunter:
+    trigger: KILL_MOB
+    target: SPIDER
+    display-name: "Lowca Pająkow"
+    description: "Zabij pająki na swojej wyspie"
+    icon: STRING
+    amount: 20
+    xp-reward: 130
+    item-rewards:
+      - STRING:16
+
+  # ---- Rybołówstwo ----
+  fisher:
+    trigger: FISH
+    target: ""
+    display-name: "Rybak"
+    description: "Zlow ryby na swojej wyspie"
+    icon: COD
+    amount: 10
+    xp-reward: 100
+    item-rewards:
+      - COD:8
+
+  # ---- Rzemiosło ----
+  crafter:
+    trigger: CRAFT_ITEM
+    target: CRAFTING_TABLE
+    display-name: "Rzemieslnik"
+    description: "Uzyj stolu craftingowego"
+    icon: CRAFTING_TABLE
+    amount: 5
+    xp-reward: 80
+    item-rewards:
+      - OAK_PLANKS:32

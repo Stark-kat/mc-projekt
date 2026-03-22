@@ -2,11 +2,11 @@ package stark.skyBlockTest2.util;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class CounterMenager {
+public class CounterManager {
 
     private final JavaPlugin plugin;
 
-    public CounterMenager(JavaPlugin plugin) {
+    public CounterManager(JavaPlugin plugin) {
         this.plugin = plugin;
     }
 

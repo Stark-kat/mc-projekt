@@ -78,9 +78,13 @@ public class MembersGui {
                     .setString("action", "OpenBans")
                     .build());
         }
+        gui.set(22, new ItemBuilder(Material.ARROW)
+                .name("§cCofnij")
+                .setString("action", "MenuGui")
+                .build());
 
         gui.fill(GuiItems.grayBackground());
-        gui.set(22, GuiItems.closeButton());
+
 
         player.openInventory(inv);
     }

@@ -1,0 +1,104 @@
+generators:
+
+  COBBLESTONE:
+    levels:
+      1:
+        name: "§7Generator I"
+        cost: 0
+        drops:
+          COBBLESTONE: 100
+      2:
+        name: "§eGenerator II"
+        cost: 500
+        drops:
+          COBBLESTONE: 75
+          COAL_ORE: 20
+          IRON_ORE: 5
+      3:
+        name: "§6Generator III"
+        cost: 2000
+        drops:
+          COBBLESTONE: 55
+          IRON_ORE: 25
+          GOLD_ORE: 15
+          DIAMOND_ORE: 5
+
+  STONE:
+    levels:
+      1:
+        name: "§7Generator I"
+        cost: 0
+        drops:
+          STONE: 100
+      2:
+        name: "§eGenerator II"
+        cost: 750
+        drops:
+          STONE: 70
+          GRANITE: 15
+          DIORITE: 10
+          ANDESITE: 5
+      3:
+        name: "§6Generator III"
+        cost: 3000
+        drops:
+          STONE: 50
+          GRANITE: 15
+          DIORITE: 10
+          ANDESITE: 10
+          DEEPSLATE: 10
+          TUFF: 5
+
+  NETHER:
+    machine_block: LODESTONE
+    machine_interval_ticks: 40
+    machine_radius: 1
+    levels:
+      1:
+        name: "§7Generator Netheru I"
+        cost: 0
+        drops:
+          NETHERRACK: 100
+      2:
+        name: "§eGenerator Netheru II"
+        cost: 1000
+        drops:
+          NETHERRACK: 65
+          NETHER_QUARTZ_ORE: 25
+          NETHER_GOLD_ORE: 10
+      3:
+        name: "§6Generator Netheru III"
+        cost: 4000
+        drops:
+          NETHERRACK: 45
+          NETHER_QUARTZ_ORE: 25
+          NETHER_GOLD_ORE: 15
+          ANCIENT_DEBRIS: 5
+          BLACKSTONE: 10
+
+  END:
+    machine_block: CRYING_OBSIDIAN
+    machine_interval_ticks: 60
+    machine_radius: 1
+    levels:
+      1:
+        name: "§7Generator Endu I"
+        cost: 0
+        drops:
+          END_STONE: 100
+      2:
+        name: "§eGenerator Endu II"
+        cost: 1500
+        drops:
+          END_STONE: 70
+          PURPUR_BLOCK: 20
+          CHORUS_PLANT: 10
+      3:
+        name: "§6Generator Endu III"
+        cost: 5000
+        drops:
+          END_STONE: 50
+          PURPUR_BLOCK: 25
+          CHORUS_PLANT: 15
+          END_STONE_BRICKS: 5
+          SHULKER_SHELL: 5

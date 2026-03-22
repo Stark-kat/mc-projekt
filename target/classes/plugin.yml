@@ -8,4 +8,31 @@ commands:
     aliases: [is, wyspa, menu]
   spawn:
   setspawn:
-  issetlvl:
+  aukcja:
+    description: Otwiera GUI wystawiania aukcji
+    usage: /aukcja
+  poczta:
+    description: Otwiera skrzynkę pocztową
+    usage: /poczta
+  rank:
+    description: Zarządzanie rangami
+    permission: skyblock.rank.admin
+  money:
+    description: Sprawdź swoje saldo
+    usage: /money
+  pay:
+    description: Przelej pieniądze innemu graczowi
+    usage: /pay <gracz> <kwota>
+  eco:
+    description: Admin — zarządzaj saldem graczy
+    usage: /eco <give|set> <gracz> <kwota>
+    permission: skyblock.eco.admin
+  tpa:
+    description: Wyślij prośbę o teleport do gracza
+    usage: /tpa <nick>
+  tpaaccept:
+    description: Zaakceptuj prośbę o teleport
+    usage: /tpaaccept [nick]
+  tpadeny:
+    description: Odrzuć prośbę o teleport
+    usage: /tpadeny [nick]

@@ -5,6 +5,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import stark.skyBlockTest2.SkyBlockTest2;
 import stark.skyBlockTest2.gui.menu.CreateIslandGui;
 import stark.skyBlockTest2.gui.menu.MenuGui;
 import stark.skyBlockTest2.island.Island;
@@ -13,18 +14,36 @@ import stark.skyBlockTest2.island.IslandType;
 
 public class IslandCommand implements CommandExecutor {
 
+    private final SkyBlockTest2 plugin;
     private final IslandManager islandManager;
     private final MenuGui menuGui;
     private final CreateIslandGui createIslandGui;
 
-    public IslandCommand(IslandManager islandManager, MenuGui menuGui, CreateIslandGui createIslandGui) {
-        this.islandManager  = islandManager;
-        this.menuGui        = menuGui;
+    public IslandCommand(SkyBlockTest2 plugin, IslandManager islandManager, MenuGui menuGui, CreateIslandGui createIslandGui) {
+        this.plugin          = plugin;
+        this.islandManager   = islandManager;
+        this.menuGui         = menuGui;
         this.createIslandGui = createIslandGui;
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+
+        if (args.length > 0 && args[0].equalsIgnoreCase("reload")) {
+            if (!sender.hasPermission("skyblock.admin") && !sender.isOp()) {
+                sender.sendMessage("§cNie masz uprawnień do tej komendy.");
+                return true;
+            }
+            plugin.reloadConfig();
+            plugin.getShopManager().reload();
+            plugin.getCrateManager().reload();
+            plugin.getQuestManager().reload();
+            plugin.getGeneratorManager().reload();
+            plugin.getEconomyManager().reload();
+            plugin.getAuctionManager().reload();
+            sender.sendMessage("§a[SkyBlock] Przeladowano config.yml, shop.yml, loot_crates.yml, questy, osiagniecia, generator.yml, ekonomie i aukcje.");
+            return true;
+        }
 
         if (!(sender instanceof Player player)) {
             sender.sendMessage("Tylko gracz może użyć tej komendy.");
@@ -45,27 +64,19 @@ public class IslandCommand implements CommandExecutor {
             case "create"   -> islandManager.createIsland(player);
             case "home"     -> islandManager.teleportHome(player);
             case "nether"   -> islandManager.teleportHome(player, IslandType.NETHER);
+            case "end"      -> islandManager.teleportHome(player, IslandType.END);
+            case "cave" -> islandManager.teleportHome(player, IslandType.CAVE);
 
             case "sethome" -> {
                 if (args.length >= 2 && args[1].equalsIgnoreCase("nether")) {
                     islandManager.setHome(player, IslandType.NETHER);
+                } else if (args.length >= 2 && args[1].equalsIgnoreCase("end")) {
+                    islandManager.setHome(player, IslandType.END);
+                } else if (args.length >= 2 && args[1].equalsIgnoreCase("cave")) {
+                    islandManager.setHome(player, IslandType.CAVE);
                 } else {
                     islandManager.setHome(player);
                 }
-            }
-
-            case "repairhome" -> {
-                Island island = islandManager.getIsland(player.getUniqueId());
-                if (island == null) {
-                    player.sendMessage("§cNie należysz do żadnej wyspy!");
-                    return true;
-                }
-                if (!islandManager.isOwner(player.getUniqueId())) {
-                    player.sendMessage("§cTylko lider może naprawić punkt domowy!");
-                    return true;
-                }
-                islandManager.repairHomeToNearest(island);
-                player.sendMessage("§aPunkt domowy został naprawiony!");
             }
 
             case "delete" -> {
@@ -198,6 +209,64 @@ public class IslandCommand implements CommandExecutor {
                     return true;
                 }
                 islandManager.setCoLeader(player, target.getUniqueId());
+            }
+
+            // -----------------------------------------------------------------
+            // Komendy administracyjne / testowe
+            // -----------------------------------------------------------------
+
+            case "givexp" -> {
+                if (!player.hasPermission("skyblock.admin") && !player.isOp()) {
+                    player.sendMessage("§cNie masz uprawnień do tej komendy.");
+                    return true;
+                }
+                if (args.length < 2) {
+                    player.sendMessage("§cUżycie: /is givexp <ilość>");
+                    return true;
+                }
+                Island island = islandManager.getIsland(player.getUniqueId());
+                if (island == null) {
+                    player.sendMessage("§cNie masz wyspy!");
+                    return true;
+                }
+                try {
+                    long amount = Long.parseLong(args[1]);
+                    if (amount <= 0) {
+                        player.sendMessage("§cIlość XP musi być większa od 0.");
+                        return true;
+                    }
+                    plugin.getQuestManager().grantXp(island, amount);
+                    player.sendMessage("§aDodano §f" + amount + " §aXP wyspy.");
+                } catch (NumberFormatException e) {
+                    player.sendMessage("§cArgument musi być liczbą.");
+                }
+            }
+
+            case "setislandlvl" -> {
+                if (!player.hasPermission("skyblock.admin") && !player.isOp()) {
+                    player.sendMessage("§cNie masz uprawnień do tej komendy.");
+                    return true;
+                }
+                if (args.length < 2) {
+                    player.sendMessage("§cUżycie: /is setislandlvl <poziom>");
+                    return true;
+                }
+                Island island = islandManager.getIsland(player.getUniqueId());
+                if (island == null) {
+                    player.sendMessage("§cNie masz wyspy!");
+                    return true;
+                }
+                try {
+                    int level = Integer.parseInt(args[1]);
+                    if (level < 1) {
+                        player.sendMessage("§cPoziom musi być większy od 0.");
+                        return true;
+                    }
+                    plugin.getQuestManager().setIslandXpLevel(island, level);
+                    player.sendMessage("§aUstawiono XP wyspy na poziom §f" + level + "§a.");
+                } catch (NumberFormatException e) {
+                    player.sendMessage("§cArgument musi być liczbą.");
+                }
             }
 
             default -> player.sendMessage("§cNieznana podkomenda. Użyj /island aby otworzyć menu.");

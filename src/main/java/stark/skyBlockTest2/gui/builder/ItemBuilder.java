@@ -52,6 +52,14 @@ public class ItemBuilder {
         return this;
     }
 
+    public static String getString(ItemStack item, String key) {
+        if (item == null) return null;
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return null;
+        NamespacedKey namespacedKey = new NamespacedKey(SkyBlockTest2.getInstance(), key);
+        return meta.getPersistentDataContainer().get(namespacedKey, PersistentDataType.STRING);
+    }
+
     public ItemBuilder glow(boolean active) {
         if (active) {
             meta.addEnchant(Enchantment.LOYALTY, 1, true);

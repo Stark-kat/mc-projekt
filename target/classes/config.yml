@@ -1,6 +1,29 @@
 # ============================================================
 #   SkyBlockTest2 - Konfiguracja
 # ============================================================
+liczniki:
+  UnikalniGracze: 2
+spawn:
+  world: world
+  x: -8.476347301812751
+  y: 68.0
+  z: 0.4845991948338124
+  yaw: -179.09999
+  pitch: 0.7500005
+
+# ------ Teleport (/tpa) ------
+teleport:
+  # Czas odliczania (w sekundach) przed teleportem — zależny od rangi gracza.
+  # Gracz musi stać w miejscu przez cały czas odliczania.
+  # 0 = natychmiastowy teleport
+  delay-by-rank:
+    PLAYER: 5
+    VIP: 3
+    ADMIN: 0
+
+economy:
+  # Nazwa waluty wyświetlana przy formatowaniu kwot
+  currency: "Monet"
 
 island:
   # Koszt ulepszenia wyspy do danego poziomu.
@@ -21,3 +44,37 @@ nether-island:
     3: 20000.0
     4: 50000.0
     5: 120000.0
+
+# ------ Questy ------
+quests:
+  daily-count: 3
+  weekly-count: 2
+  daily-reset-time: "06:00"
+  weekly-reset-day: "MONDAY"
+  weekly-reset-time: "06:00"
+  daily-bonus:
+    xp: 500
+    items: [ ]
+  weekly-bonus:
+    xp: 2000
+    items: [ ]
+
+# ------ XP Wyspy ------
+# XP potrzebne do przejścia z poziomu N na N+1 = base + multiplier * N^exponent
+# Przykład dla domyślnych wartości:
+#   1→2 :  20 + 3 * 1^1.7  =  23 XP
+#   2→3 :  20 + 3 * 2^1.7  ≈  30 XP
+#   5→6 :  20 + 3 * 5^1.7  ≈  79 XP
+#  10→11:  20 + 3 * 10^1.7 ≈ 171 XP
+island-xp:
+  formula:
+    base: 20.0
+    multiplier: 3.0
+    exponent: 1.7
+
+  # ------ Aukcje ------
+  auction:
+    commission-percent: 5.0  # % prowizji od sprzedaży
+    max-listings-per-player: 5  # Max aukcji na gracza jednocześnie
+  mail:
+    max-messages: 50

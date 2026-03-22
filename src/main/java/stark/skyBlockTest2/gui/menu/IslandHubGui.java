@@ -17,7 +17,7 @@ public class IslandHubGui {
     private final EconomyManager economyManager;
 
     // Sloty dla kolejnych typów wysp (OVERWORLD=11, NETHER=15, ...)
-    private static final int[] TYPE_SLOTS = {11, 15};
+    private static final int[] TYPE_SLOTS = {10, 12, 14, 16};
 
     public IslandHubGui(IslandManager islandManager, EconomyManager economyManager) {
         this.islandManager  = islandManager;

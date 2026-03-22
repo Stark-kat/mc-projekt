@@ -1,5 +1,6 @@
 package stark.skyBlockTest2.island.listener;
 
+import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.Tag;
 import org.bukkit.block.Block;
@@ -7,14 +8,13 @@ import org.bukkit.entity.Animals;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Villager;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockIgniteEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.*;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.Location;
@@ -22,6 +22,8 @@ import stark.skyBlockTest2.island.Island;
 import stark.skyBlockTest2.island.IslandAction;
 import stark.skyBlockTest2.island.IslandManager;
 import stark.skyBlockTest2.island.IslandType;
+
+import java.util.Objects;
 
 public class IslandProtectionListener implements Listener {
 
@@ -67,12 +69,23 @@ public class IslandProtectionListener implements Listener {
         return island.getOwner().equals(player.getUniqueId());
     }
 
+    private boolean isIslandWorld(org.bukkit.World world) {
+        if (world == null) return false;
+        for (IslandType type : IslandType.values()) {
+            if (type.worldName.equals(world.getName())) return true;
+        }
+        return false;
+    }
+
     private boolean shouldCancel(Player player, Block block, IslandAction type) {
         if (block == null) return false;
         Location loc = block.getLocation();
         if (isEffectiveMember(player, loc)) return false;
         Island island = getEffectiveIsland(loc);
-        if (island == null) return false;
+        if (island == null) {
+            // Blok poza granicą wyspy w świecie wyspowym — blokuj
+            return isIslandWorld(loc.getWorld());
+        }
         if (island.canVisitorDo(type)) return false;
         player.sendMessage("§cNie masz uprawnień do: " + type.getDisplayName());
         return true;
@@ -85,15 +98,43 @@ public class IslandProtectionListener implements Listener {
     }
 
     // -------------------------------------------------------------------------
+    // Granice wyspy — blokujemy wyjście poza wyspę niezależnie od borderu
+    // -------------------------------------------------------------------------
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onIslandBoundary(PlayerMoveEvent event) {
+        if (event.getTo() == null) return;
+
+        Location from = event.getFrom();
+        Location to   = event.getTo();
+        if ((from.getBlockX() >> 4) == (to.getBlockX() >> 4)
+                && (from.getBlockZ() >> 4) == (to.getBlockZ() >> 4)) return;
+
+        if (event.getPlayer().getGameMode() == GameMode.SPECTATOR) return;
+
+        Island fromIsland = islandManager.getIslandAt(from);
+        Island toIsland   = islandManager.getIslandAt(to);
+
+        if (fromIsland == null && toIsland == null) return;
+        if (Objects.equals(fromIsland, toIsland)) return;
+
+        event.setCancelled(true);
+    }
+
+    // -------------------------------------------------------------------------
     // Zbanowani — blokujemy wejście na wyspę
     // -------------------------------------------------------------------------
 
     @EventHandler(priority = EventPriority.LOW)
     public void onBannedMove(PlayerMoveEvent event) {
         if (event.getTo() == null) return;
+        Location from = event.getFrom();
+        Location to   = event.getTo();
+        if ((from.getBlockX() >> 4) == (to.getBlockX() >> 4)
+                && (from.getBlockZ() >> 4) == (to.getBlockZ() >> 4)) return;
+
         Player player = event.getPlayer();
-        // Lista banów zawsze pochodzi z wyspy OVERWORLD właściciela
-        Island island = getEffectiveIsland(event.getTo());
+        Island island = getEffectiveIsland(to);
         if (island == null) return;
         if (!island.isBanned(player.getUniqueId())) return;
         event.setCancelled(true);
@@ -277,8 +318,16 @@ public class IslandProtectionListener implements Listener {
     @EventHandler(priority = EventPriority.LOW)
     public void onEntityDamage(EntityDamageByEntityEvent event) {
         if (!(event.getDamager() instanceof Player player)) return;
+        Entity entity = event.getEntity();
         if (event.getEntity() instanceof Animals || event.getEntity() instanceof Villager)
             if (shouldCancel(player, event.getEntity().getLocation().getBlock(), IslandAction.KILL_ANIMALS))
+                event.setCancelled(true);
+        if (entity instanceof org.bukkit.entity.ArmorStand)
+            if (shouldCancel(player, entity.getLocation().getBlock(), IslandAction.ARMOR_STAND_INTERACT))
+                event.setCancelled(true);
+
+        if (entity instanceof org.bukkit.entity.ItemFrame)
+            if (shouldCancel(player, entity.getLocation().getBlock(), IslandAction.ITEM_FRAME_INTERACT))
                 event.setCancelled(true);
     }
 
@@ -334,5 +383,120 @@ public class IslandProtectionListener implements Listener {
                     cause == org.bukkit.event.entity.EntityDamageEvent.DamageCause.BLOCK_EXPLOSION)
                 event.setCancelled(true);
         }
+    }
+// RAMKI
+    @EventHandler(priority = EventPriority.LOW)
+    public void onHangingBreak(org.bukkit.event.hanging.HangingBreakByEntityEvent event) {
+        if (!(event.getRemover() instanceof Player player)) return;
+        if (!(event.getEntity() instanceof org.bukkit.entity.ItemFrame)) return;
+        if (shouldCancel(player, event.getEntity().getLocation().getBlock(), IslandAction.ITEM_FRAME_INTERACT))
+            event.setCancelled(true);
+    }
+
+    // -------------------------------------------------------------------------
+// Teleportacje — ender perła i chorus fruit
+// -------------------------------------------------------------------------
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onTeleport(PlayerTeleportEvent event) {
+        if (event.getTo() == null) return;
+        var cause = event.getCause();
+        if (cause != PlayerTeleportEvent.TeleportCause.ENDER_PEARL) return;
+        if (event.getPlayer().getGameMode() == GameMode.SPECTATOR) return;
+
+        Island fromIsland = islandManager.getIslandAt(event.getFrom());
+        Island toIsland   = islandManager.getIslandAt(event.getTo());
+
+        if (fromIsland == null && toIsland == null) return;
+        if (Objects.equals(fromIsland, toIsland)) return;
+
+        event.setCancelled(true);
+        event.getPlayer().sendMessage("§cNie możesz teleportować się poza granicę wyspy!");
+    }
+
+// -------------------------------------------------------------------------
+// Projektyle — strzały, trójząb przez granicę
+// -------------------------------------------------------------------------
+
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onProjectileHit(ProjectileHitEvent event) {
+        if (!(event.getEntity().getShooter() instanceof Player shooter)) return;
+        if (event.getHitEntity() == null) return;
+
+        Island shooterIsland = islandManager.getIslandAt(shooter.getLocation());
+        Island targetIsland  = islandManager.getIslandAt(event.getHitEntity().getLocation());
+
+        if (Objects.equals(shooterIsland, targetIsland)) return;
+
+        event.setCancelled(true);
+    }
+
+// -------------------------------------------------------------------------
+// Wędka — hookowanie bytów przez granicę
+// -------------------------------------------------------------------------
+
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onFish(PlayerFishEvent event) {
+        if (!(event.getCaught() instanceof Entity caught)) return;
+
+        Island playerIsland = islandManager.getIslandAt(event.getPlayer().getLocation());
+        Island caughtIsland = islandManager.getIslandAt(caught.getLocation());
+
+        if (Objects.equals(playerIsland, caughtIsland)) return;
+
+        event.setCancelled(true);
+    }
+
+// -------------------------------------------------------------------------
+// Tłoki — blokujemy przepychanie bloków między wyspami
+// -------------------------------------------------------------------------
+
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onPistonExtend(BlockPistonExtendEvent event) {
+        Island pistonIsland = islandManager.getIslandAt(event.getBlock().getLocation());
+        for (Block block : event.getBlocks()) {
+            Block dest = block.getRelative(event.getDirection());
+            if (!Objects.equals(pistonIsland, islandManager.getIslandAt(dest.getLocation()))) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onPistonRetract(BlockPistonRetractEvent event) {
+        Island pistonIsland = islandManager.getIslandAt(event.getBlock().getLocation());
+        for (Block block : event.getBlocks()) {
+            Block dest = block.getRelative(event.getDirection());
+            if (!Objects.equals(pistonIsland, islandManager.getIslandAt(dest.getLocation()))) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+    }
+
+// -------------------------------------------------------------------------
+// Przepływ cieczy — woda/lawa nie może zalać sąsiedniej wyspy
+// -------------------------------------------------------------------------
+
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onLiquidFlow(BlockFromToEvent event) {
+        if (!isIslandWorld(event.getBlock().getWorld())) return;
+        Island fromIsland = islandManager.getIslandAt(event.getBlock().getLocation());
+        Island toIsland   = islandManager.getIslandAt(event.getToBlock().getLocation());
+
+        if (Objects.equals(fromIsland, toIsland)) return;
+
+        event.setCancelled(true);
+    }
+
+// -------------------------------------------------------------------------
+// Łóżko — blokujemy efekty snu na wyspach (spawn, robienie dnia)
+// -------------------------------------------------------------------------
+
+    @EventHandler(priority = EventPriority.LOW)
+    public void onBedEnter(PlayerBedEnterEvent event) {
+        if (!isIslandWorld(event.getPlayer().getWorld())) return;
+        event.setUseBed(Event.Result.DENY);
     }
 }

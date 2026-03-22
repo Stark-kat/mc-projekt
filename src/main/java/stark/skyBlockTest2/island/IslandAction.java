@@ -4,7 +4,6 @@ package stark.skyBlockTest2.island;
  * Akcje, które gość może wykonać na wyspie.
  * Wyciągnięte z IslandProtectionListener — model danych nie powinien
  * zależeć od warstwy listenerów.
- *
  * Akcje z editable=false nie pojawiają się w GUI ustawień —
  * są zawsze wyłączone (np. PVP) lub zawsze włączone.
  */
@@ -28,7 +27,8 @@ public enum IslandAction {
     USE_ENCHANTING("Stół do zaklęć",                true,  ActionCategory.UTILITY),
     USE_BREWING("Stół alchemiczny",                 true,  ActionCategory.UTILITY),
     INTERACT_DECORATIONS("Dekoracje",               false, ActionCategory.UTILITY),
-    INTERACT_UTILITY("Ramki",                       false, ActionCategory.UTILITY),
+    INTERACT_UTILITY("Mównica",                     false, ActionCategory.UTILITY),
+    ITEM_FRAME_INTERACT("Ramki",                    false, ActionCategory.UTILITY),
     ARMOR_STAND_INTERACT("Interakcja ze stojakiem", false, ActionCategory.UTILITY),
 
     // --- Mechanizmy ---

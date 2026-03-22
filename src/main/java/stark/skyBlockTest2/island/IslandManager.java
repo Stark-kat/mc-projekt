@@ -3,12 +3,16 @@ package stark.skyBlockTest2.island;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import stark.skyBlockTest2.SkyBlockTest2;
+import stark.skyBlockTest2.database.DatabaseManager;
 import stark.skyBlockTest2.teleport.TeleportManager;
 import stark.skyBlockTest2.border.BorderManager;
 import stark.skyBlockTest2.economy.EconomyManager;
+import stark.skyBlockTest2.quest.QuestManager;
+import stark.skyBlockTest2.quest.QuestTrigger;
 
 import java.util.*;
 import java.util.EnumMap;
@@ -22,10 +26,11 @@ public class IslandManager {
     private final Map<UUID, UUID> pendingInvites = new HashMap<>();
     private final Set<UUID> pendingDeletes = new HashSet<>();
     private final IslandGenerator generator = new IslandGenerator();
-    private final IslandStorage storage;
+    private final DatabaseManager storage;
     private final TeleportManager teleportManager;
     private BorderManager borderManager;
     private EconomyManager economyManager;
+    private QuestManager questManager;
 
     private final int[] islandSizes = {0, 1, 2, 3, 4};
     private static final int SPACING_CHUNKS = 10;
@@ -49,9 +54,13 @@ public class IslandManager {
         this.economyManager = economyManager;
     }
 
+    public void setQuestManager(QuestManager questManager) {
+        this.questManager = questManager;
+    }
+
     public IslandManager(SkyBlockTest2 plugin, TeleportManager teleportManager) {
         this.plugin = plugin;
-        this.storage = new IslandStorage(plugin);
+        this.storage = plugin.getDatabaseManager();
         this.teleportManager = teleportManager;
 
         // OVERWORLD
@@ -96,7 +105,7 @@ public class IslandManager {
         return playerToIsland.get(uuid);
     }
 
-    public IslandStorage getStorage() {
+    public DatabaseManager getStorage() {
         return storage;
     }
 
@@ -149,9 +158,10 @@ public class IslandManager {
 
         center.getChunk().load(true);
         storage.saveIsland(island, IslandType.OVERWORLD);
+        applyBiome(island, IslandType.OVERWORLD);
 
         player.sendMessage("§7Tworzenie wyspy, poczekaj chwilę...");
-        plugin.getSchematicManager().pasteSchematic(center, "Default_Island", () -> {
+        plugin.getSchematicManager().pasteSchematic(center, IslandType.OVERWORLD.schematicName, () -> {
             player.teleport(island.getHome());
             player.sendMessage("§aWyspa została utworzona!");
         });
@@ -187,7 +197,9 @@ public class IslandManager {
             return;
         }
         if (!isLocationSafe(island.getHome())) {
-            player.sendMessage("§cTwój dom wyspy jest uszkodzony! Napraw go komendą §e/is repairhome");
+            player.sendMessage("§cPunkt domowy jest uszkodzony! Rozpoczynam naprawę...");
+            repairHomeToNearest(island, IslandType.OVERWORLD);
+            player.sendMessage("§aPunkt domowy naprawiony. Użyj ponownie §e/is home");
             return;
         }
         player.teleport(island.getHome());
@@ -207,11 +219,11 @@ public class IslandManager {
     // Naprawa domu
     // -------------------------------------------------------------------------
 
-    public void repairHomeToNearest(Island island) {
+    public void repairHomeToNearest(Island island, IslandType type) {
         Location currentHome = island.getHome();
         World world = currentHome.getWorld();
         if (world == null) {
-            handleEmergencyHome(island, island.getCenter());
+            handleEmergencyHome(island, island.getCenter(), type);
             return;
         }
 
@@ -240,7 +252,7 @@ public class IslandManager {
 
                             if (island.isInside(check) && isLocationSafe(check)) {
                                 setAndSaveHome(island, check,
-                                        currentHome.getYaw(), currentHome.getPitch());
+                                        currentHome.getYaw(), currentHome.getPitch(), type);
                                 return;
                             }
                         }
@@ -249,18 +261,18 @@ public class IslandManager {
             }
         }
 
-        handleEmergencyHome(island, island.getCenter());
+        handleEmergencyHome(island, island.getCenter(), type);
     }
 
-    private void setAndSaveHome(Island island, Location loc, float yaw, float pitch) {
+    private void setAndSaveHome(Island island, Location loc, float yaw, float pitch, IslandType type) {
         Location newHome = loc.clone().add(0.5, 0.1, 0.5);
         newHome.setYaw(yaw);
         newHome.setPitch(pitch);
         island.setHome(newHome);
-        storage.saveIsland(island, IslandType.OVERWORLD);
+        storage.saveIsland(island, type);
     }
 
-    private void handleEmergencyHome(Island island, Location center) {
+    private void handleEmergencyHome(Island island, Location center, IslandType type) {
         Location emergencyLoc = center.clone();
         emergencyLoc.setY(100);
 
@@ -270,7 +282,7 @@ public class IslandManager {
         }
 
         island.setHome(emergencyLoc.add(0.5, 0.1, 0.5));
-        storage.saveIsland(island, IslandType.OVERWORLD);
+        storage.saveIsland(island, type);
     }
 
     // -------------------------------------------------------------------------
@@ -316,6 +328,8 @@ public class IslandManager {
             player.sendMessage("§cNie jesteś właścicielem żadnej wyspy!");
             return;
         }
+        if (plugin.getQuestManager() != null) plugin.getQuestManager().resetIslandData(ownerUUID);
+        if (plugin.getGeneratorManager() != null) plugin.getGeneratorManager().deleteIslandData(island);
 
         // Wyrejestrowanie OVERWORLD
         playerToIsland.remove(ownerUUID);
@@ -358,7 +372,6 @@ public class IslandManager {
                             secondaryIndexes.get(capturedType),
                             free));
 
-            // Usuń z pliku
             storage.deleteIsland(ownerUUID, secType);
 
             plugin.getLogger().info("[IslandManager] Usunięto " + secType.displayName
@@ -516,6 +529,11 @@ public class IslandManager {
             return;
         }
 
+        if (hasIsland(target.getUniqueId())) {
+            sender.sendMessage("§cTen gracz ma już własną wyspę!");
+            return;
+        }
+
         if (island.getMembers().size() >= 4) {
             sender.sendMessage("§cTwoja wyspa jest pełna! Maksymalna liczba członków to 4.");
             return;
@@ -564,6 +582,7 @@ public class IslandManager {
         player.sendMessage("§aDołączyłeś do wyspy!");
         Player owner = Bukkit.getPlayer(ownerUUID);
         if (owner != null) owner.sendMessage("§e" + player.getName() + " §adołączył do Twojej wyspy!");
+        if (questManager != null) questManager.addProgress(ownerUUID, QuestTrigger.INVITE_MEMBER, "", 1);
     }
 
     public void declineInvite(Player player) {
@@ -784,6 +803,7 @@ public class IslandManager {
 
         visitor.teleport(targetIsland.getHome());
         visitor.sendMessage("§aTeleportowano na wyspę gracza §e" + targetOwnerName);
+        if (questManager != null) questManager.addProgress(visitor, QuestTrigger.VISIT_ISLAND, "", 1);
 
         Player ownerOnline = Bukkit.getPlayer(targetOwnerUUID);
         if (ownerOnline != null) {
@@ -833,6 +853,8 @@ public class IslandManager {
         island.setSize(nextSize);
         storage.saveIsland(island, IslandType.OVERWORLD);
         updateBorderForEveryoneOnIsland(island);
+        if (questManager != null)
+            questManager.addProgress(player, QuestTrigger.EXPAND_ISLAND, "", 1);
         player.sendMessage("§aTwoja wyspa została powiększona do rozmiaru §e"
                 + (nextSize * 2 + 1) + "x" + (nextSize * 2 + 1) + "§a!");
     }
@@ -868,7 +890,10 @@ public class IslandManager {
         int newSize = islandSizes[targetLevel - 1];
         island.setSize(newSize);
         storage.saveIsland(island, IslandType.OVERWORLD);
+        applyBiome(island, IslandType.OVERWORLD);
         updateBorderForEveryoneOnIsland(island);
+        if (questManager != null)
+            questManager.addProgress(player, QuestTrigger.EXPAND_ISLAND, "", 1);
         player.sendMessage("§aTwoja wyspa została powiększona do poziomu §e" + targetLevel
                 + " §a(" + (newSize * 2 + 1) + "x" + (newSize * 2 + 1) + ")§a!");
     }
@@ -1005,11 +1030,15 @@ public class IslandManager {
 
         center.getChunk().load(true);
         storage.saveIsland(island, type);
+        applyBiome(island, type);
 
         player.sendMessage("§7Tworzenie " + type.displayName + ", poczekaj chwilę...");
-        plugin.getSchematicManager().pasteSchematic(center, "Default_Island", () -> {
+        plugin.getSchematicManager().pasteSchematic(center, type.schematicName, () -> {
             player.teleport(island.getHome());
             player.sendMessage("§a" + type.displayName + " została utworzona!");
+            if (questManager != null && type == IslandType.NETHER) {
+                questManager.addProgress(player, QuestTrigger.UNLOCK_NETHER, "", 1);
+            }
         });
     }
 
@@ -1023,13 +1052,14 @@ public class IslandManager {
         Island island = getSecondaryIslandForPlayer(player.getUniqueId(), type);
         if (island == null) {
             player.sendMessage("§cTwoja wyspa nie posiada §e" + type.displayName
-                    + "§c! Właściciel może ją kupić przez §e/island hub§c.");
+                    + "§c! Właściciel może ją kupić przez §e/is");
             return;
         }
         if (!isLocationSafe(island.getHome())) {
             player.sendMessage("§cPunkt domowy " + type.displayName
-                    + " jest uszkodzony! Właściciel może go naprawić: §e/is sethome "
-                    + type.name().toLowerCase());
+                    + " jest uszkodzony! Rozpoczynam naprawe...");
+            repairHomeToNearest(island, type);
+            player.sendMessage("§aPunkt domowy został naprawiony. Spróbuj ponownie §e/is home");
             return;
         }
         player.teleport(island.getHome());
@@ -1094,6 +1124,7 @@ public class IslandManager {
         int newSize = islandSizes[targetLevel - 1];
         island.setSize(newSize);
         storage.saveIsland(island, type);
+        applyBiome(island, type);
         updateBorderForEveryoneOnIsland(island);
         player.sendMessage("§a" + type.displayName + " powiększona do poziomu §e" + targetLevel
                 + " §a(" + (newSize * 2 + 1) + "x" + (newSize * 2 + 1) + ")§a!");
@@ -1134,5 +1165,29 @@ public class IslandManager {
             }
             plugin.getLogger().info("[SkyBlock] Naprawiono " + orphans.size() + " osieroconych obszarów.");
         }, 1L);
+    }
+
+    // -------------------------------------------------------------------------
+    // Biom — ustawiany po stworzeniu wyspy i po każdym ulepszeniu
+    // -------------------------------------------------------------------------
+
+    private void applyBiome(Island island, IslandType type) {
+        World world = plugin.getWorldManager().getWorld(type);
+        if (world == null) return;
+        Biome biome = type.defaultBiome;
+
+        for (int cx = island.getMinChunkX(); cx <= island.getMaxChunkX(); cx++) {
+            for (int cz = island.getMinChunkZ(); cz <= island.getMaxChunkZ(); cz++) {
+                for (int bx = 0; bx < 16; bx += 4) {
+                    for (int bz = 0; bz < 16; bz += 4) {
+                        int wx = (cx << 4) + bx;
+                        int wz = (cz << 4) + bz;
+                        for (int y = world.getMinHeight(); y < world.getMaxHeight(); y += 4) {
+                            world.setBiome(wx, y, wz, biome);
+                        }
+                    }
+                }
+            }
+        }
     }
 }

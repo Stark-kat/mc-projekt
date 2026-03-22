@@ -1,0 +1,83 @@
+crates:
+
+  # ---- Skrzynka Wyspy (Common) ----
+  island_crate:
+    display-name: "Skrzynka Wyspy"
+    rarity: COMMON
+    rewards:
+      - item: IRON_INGOT
+        amount: 16
+        weight: 50
+        rarity: COMMON
+        name: "Zelazna Sztabka x16"
+
+      - item: GOLD_INGOT
+        amount: 8
+        weight: 30
+        rarity: COMMON
+        name: "Zlota Sztabka x8"
+
+      - item: DIAMOND
+        amount: 3
+        weight: 15
+        rarity: RARE
+        name: "Diament x3"
+
+      - item: custom:book_fortune_3
+        weight: 8
+        rarity: RARE
+
+      - item: custom:book_efficiency_5
+        weight: 5
+        rarity: EPIC
+
+      - item: custom:spawner_zombie
+        weight: 3
+        rarity: EPIC
+        name: "Spawner Zombie"
+
+      - item: custom:spawner_blaze
+        weight: 1
+        rarity: LEGENDARY
+        name: "Spawner Blaze"
+
+  # ---- Skrzynka Netheру (Rare) ----
+  nether_crate:
+    display-name: "Skrzynka Netheru"
+    rarity: RARE
+    rewards:
+      - item: BLAZE_ROD
+        amount: 16
+        weight: 50
+        rarity: COMMON
+        name: "Rozga Blaze x16"
+
+      - item: MAGMA_CREAM
+        amount: 12
+        weight: 40
+        rarity: COMMON
+        name: "Krem z Magmy x12"
+
+      - item: NETHER_STAR
+        amount: 1
+        weight: 5
+        rarity: EPIC
+        name: "Gwiazda Netheru"
+
+      - item: custom:spawner_blaze
+        weight: 8
+        rarity: RARE
+        name: "Spawner Blaze"
+
+      - item: custom:spawner_magma_cube
+        weight: 6
+        rarity: RARE
+        name: "Spawner Magma Cube"
+
+      - item: custom:book_looting_3
+        weight: 10
+        rarity: RARE
+
+      - item: custom:book_sharpness_5
+        weight: 3
+        rarity: LEGENDARY

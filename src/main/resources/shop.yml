@@ -1,0 +1,185 @@
+# ============================================================
+# Sklep Serwera — shop.yml
+# ============================================================
+# Przeceny (discount) — w procentach (0 = brak)
+# Priorytet: konkretny przedmiot > kategoria > globalna
+# ============================================================
+
+#----przeceny----
+discounts:
+  global: 0
+  categories:
+    minerals: 30
+  items:
+    cobblestone: 20
+    diamond: 0
+
+categories:
+
+  # ---- Bloki i materiały ----
+  blocks:
+    display-name: "Bloki i Materialy"
+    icon: STONE
+    items:
+
+      cobblestone:
+        item: COBBLESTONE
+        amount: 1
+        buy-price: 2
+        sell-price: 1
+
+      stone:
+        item: STONE
+        amount: 1
+        buy-price: 3
+        sell-price: 0
+
+      dirt:
+        item: DIRT
+        amount: 1
+        buy-price: 1
+        sell-price: 0
+
+      sand:
+        item: SAND
+        amount: 1
+        buy-price: 4
+        sell-price: 2
+
+      gravel:
+        item: GRAVEL
+        amount: 1
+        buy-price: 3
+        sell-price: 1
+
+      oak_log:
+        item: OAK_LOG
+        amount: 1
+        buy-price: 5
+        sell-price: 3
+
+      oak_planks:
+        item: OAK_PLANKS
+        amount: 4
+        buy-price: 4
+        sell-price: 2
+
+      glass:
+        item: GLASS
+        amount: 1
+        buy-price: 5
+        sell-price: 0
+
+  # ---- Minerały ----
+  minerals:
+    display-name: "Mineraly"
+    icon: DIAMOND
+    items:
+
+      coal:
+        item: COAL
+        amount: 1
+        buy-price: 5
+        sell-price: 3
+
+      iron_ingot:
+        item: IRON_INGOT
+        amount: 1
+        buy-price: 15
+        sell-price: 8
+
+      gold_ingot:
+        item: GOLD_INGOT
+        amount: 1
+        buy-price: 25
+        sell-price: 12
+
+      diamond:
+        item: DIAMOND
+        amount: 1
+        buy-price: 150
+        sell-price: 80
+
+      emerald:
+        item: EMERALD
+        amount: 1
+        buy-price: 200
+        sell-price: 100
+
+      lapis_lazuli:
+        item: LAPIS_LAZULI
+        amount: 1
+        buy-price: 8
+        sell-price: 4
+
+      redstone:
+        item: REDSTONE
+        amount: 1
+        buy-price: 6
+        sell-price: 3
+
+  # ---- Mob drops ----
+  mob_drops:
+    display-name: "Loopy z Mobow"
+    icon: ROTTEN_FLESH
+    items:
+
+      rotten_flesh:
+        item: ROTTEN_FLESH
+        amount: 1
+        buy-price: 0
+        sell-price: 2
+
+      bone:
+        item: BONE
+        amount: 1
+        buy-price: 0
+        sell-price: 3
+
+      string:
+        item: STRING
+        amount: 1
+        buy-price: 0
+        sell-price: 4
+
+      arrow:
+        item: ARROW
+        amount: 1
+        buy-price: 2
+        sell-price: 1
+
+      blaze_rod:
+        item: BLAZE_ROD
+        amount: 1
+        buy-price: 0
+        sell-price: 15
+
+      ender_pearl:
+        item: ENDER_PEARL
+        amount: 1
+        buy-price: 30
+        sell-price: 15
+
+      slimeball:
+        item: SLIME_BALL
+        amount: 1
+        buy-price: 0
+        sell-price: 8
+
+      gunpowder:
+        item: GUNPOWDER
+        amount: 1
+        buy-price: 0
+        sell-price: 5
+
+      spider_eye:
+        item: SPIDER_EYE
+        amount: 1
+        buy-price: 0
+        sell-price: 4
+
+      feather:
+        item: FEATHER
+        amount: 1
+        buy-price: 0
+        sell-price: 3

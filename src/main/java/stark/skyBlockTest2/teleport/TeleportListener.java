@@ -23,6 +23,7 @@ public class TeleportListener implements Listener {
 
     @EventHandler
     public void onDamage(EntityDamageEvent e) {
+        if (e.getCause() == EntityDamageEvent.DamageCause.VOID) return;
         if (e.getEntity() instanceof Player p) {
             teleportManager.cancelTeleport(p, "§7Otrzymałeś obrażenia");
         }
@@ -39,7 +40,7 @@ public class TeleportListener implements Listener {
     @EventHandler
     public void onRespawn(PlayerRespawnEvent e) {
         if (teleportManager.hasSpawn()) {
-            e.getPlayer().setRespawnLocation(teleportManager.getSpawnLocation());
+            e.setRespawnLocation(teleportManager.getSpawnLocation());
         }
     }
 
@@ -50,6 +51,7 @@ public class TeleportListener implements Listener {
         if (event.getCause() == EntityDamageEvent.DamageCause.VOID) {
                 event.setCancelled(true);
                 teleportManager.teleportWithoutDelay(player);
+                player.setFallDistance(0);
                 player.sendMessage("§cSpadłeś do pustki! Teleportowano na spawn");
         }
     }

@@ -2,67 +2,97 @@ package stark.skyBlockTest2.economy;
 
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.RegisteredServiceProvider;
+import org.bukkit.plugin.ServicePriority;
 import stark.skyBlockTest2.SkyBlockTest2;
 
-import java.util.logging.Level;
+import java.util.UUID;
 
 public class EconomyManager {
 
-    private Economy economy;
     private final SkyBlockTest2 plugin;
+    private VaultEconomyProvider provider;
+    private Economy economy;
 
     public EconomyManager(SkyBlockTest2 plugin) {
         this.plugin = plugin;
     }
 
     /**
-     * Szuka providera ekonomii (np. EssentialsX) przez Vault.
-     * Wywołać w onEnable po załadowaniu wszystkich pluginów.
+     * Tworzy i rejestruje własny provider ekonomii w Vault.
+     * Wywołać w onEnable po połączeniu z DB.
      *
-     * @return true jeśli provider został znaleziony
+     * @return zawsze true (własna implementacja, nie wymaga zewnętrznych pluginów)
      */
     public boolean setup() {
-        RegisteredServiceProvider<Economy> rsp =
-                plugin.getServer().getServicesManager().getRegistration(Economy.class);
+        String currency = plugin.getConfig().getString("economy.currency", "Monet");
 
-        if (rsp == null) {
-            plugin.getLogger().log(Level.SEVERE,
-                    "[Economy] Nie znaleziono providera ekonomii! " +
-                            "Zainstaluj EssentialsX lub inny plugin implementujący Vault Economy.");
-            return false;
-        }
+        provider = new VaultEconomyProvider(plugin.getDatabaseManager(), currency);
 
-        economy = rsp.getProvider();
-        plugin.getLogger().info("[Economy] Połączono z providerem: " + economy.getName());
+        plugin.getServer().getServicesManager().register(
+                Economy.class, provider, plugin, ServicePriority.Highest
+        );
+
+        economy = provider;
+        plugin.getLogger().info("[Economy] Zarejestrowano własny provider: SkyBlockEconomy (waluta: " + currency + ")");
         return true;
     }
 
-    /** Czy gracz ma wystarczające środki? */
+    // -------------------------------------------------------------------------
+    // Cache lifecycle — wołaj z EconomyListener
+    // -------------------------------------------------------------------------
+
+    public void loadPlayer(UUID uuid) {
+        if (provider != null) provider.loadPlayer(uuid);
+    }
+
+    public void unloadPlayer(UUID uuid) {
+        if (provider != null) provider.unloadPlayer(uuid);
+    }
+
+    // -------------------------------------------------------------------------
+    // Delegaty — zachowują kompatybilność z resztą pluginu
+    // -------------------------------------------------------------------------
+
     public boolean has(Player player, double amount) {
-        if (economy == null) return false;
-        return economy.has(player, amount);
+        return economy != null && economy.has(player, amount);
     }
 
-    /** Odejmuje środki. Zwraca true jeśli transakcja się powiodła. */
     public boolean withdraw(Player player, double amount) {
-        if (economy == null) return false;
-        return economy.withdrawPlayer(player, amount).transactionSuccess();
+        return economy != null && economy.withdrawPlayer(player, amount).transactionSuccess();
     }
 
-    /** Aktualny balans gracza. */
+    public boolean deposit(Player player, double amount) {
+        return economy != null && economy.depositPlayer(player, amount).transactionSuccess();
+    }
+
+    public void depositOffline(UUID uuid, double amount) {
+        if (provider != null) provider.depositPlayer(plugin.getServer().getOfflinePlayer(uuid), amount);
+    }
+
     public double getBalance(Player player) {
-        if (economy == null) return 0;
-        return economy.getBalance(player);
+        return economy == null ? 0 : economy.getBalance(player);
     }
 
-    /** Formatuje kwotę zgodnie z walutą providera (np. "5 000,00 $"). */
     public String format(double amount) {
-        if (economy == null) return String.format("%.2f", amount);
-        return economy.format(amount);
+        return economy == null ? String.format("%.2f", amount) : economy.format(amount);
+    }
+
+    /** Ustawia saldo (admin). Działa też dla offline graczy. */
+    public void setBalance(UUID uuid, double amount) {
+        if (provider != null) provider.setBalance(uuid, amount);
+    }
+
+    public void reload() {
+        if (provider == null) return;
+        String currency = plugin.getConfig().getString("economy.currency", "Monet");
+        provider.setCurrency(currency);
     }
 
     public boolean isAvailable() {
         return economy != null;
+    }
+
+    public Economy getEconomy() {
+        return economy;
     }
 }

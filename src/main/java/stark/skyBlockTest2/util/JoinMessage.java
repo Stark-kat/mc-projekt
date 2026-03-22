@@ -8,10 +8,10 @@ import org.bukkit.event.player.PlayerJoinEvent;
 
 public class JoinMessage implements Listener {
 
-    private final CounterMenager counterMenager;
+    private final CounterManager counterManager;
 
-    public JoinMessage(CounterMenager counterMenager) {
-        this.counterMenager = counterMenager;
+    public JoinMessage(CounterManager counterManager) {
+        this.counterManager = counterManager;
     }
 
     @EventHandler
@@ -24,7 +24,7 @@ public class JoinMessage implements Listener {
             msg= "§aMiło Cię znowu widzieć, §f" + player.getName() + "§a!";
         } else {
             msg= "§6Witaj §f" + player.getName() + "§6! Jesteś tu pierwszy raz 🎉";
-            counterMenager.add("UnikalniGracze");
+            counterManager.add("UnikalniGracze");
         }
         player.sendMessage(msg);
     }

@@ -19,7 +19,8 @@ public class IslandTabCompleter implements TabCompleter {
             "setleader", "transfer",
             "visit",
             "ban", "unban", "pardon",
-            "setcoleader", "coleader"
+            "setcoleader", "coleader",
+            "givexp", "setislandlvl"
     );
 
     // Subkomendy wymagające nicku gracza jako args[1]

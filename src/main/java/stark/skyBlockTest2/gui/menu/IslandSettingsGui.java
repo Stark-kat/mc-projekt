@@ -103,7 +103,7 @@ public class IslandSettingsGui {
             case USE_ENCHANTING       -> Material.ENCHANTING_TABLE;
             case USE_BREWING          -> Material.BREWING_STAND;
             case INTERACT_DECORATIONS -> Material.FLOWER_POT;
-            case INTERACT_UTILITY     -> Material.ITEM_FRAME;
+            case INTERACT_UTILITY     -> Material.LECTERN;
             case ARMOR_STAND_INTERACT -> Material.ARMOR_STAND;
             case USE_DOORS            -> Material.OAK_DOOR;
             case USE_BUTTONS          -> Material.STONE_BUTTON;
@@ -113,6 +113,7 @@ public class IslandSettingsGui {
             case SHEAR_SHEEP          -> Material.SHEARS;
             case KILL_ANIMALS         -> Material.IRON_SWORD;
             case VILLAGER_TRADE       -> Material.EMERALD;
+            case ITEM_FRAME_INTERACT  -> Material.ITEM_FRAME;
         };
     }
 }

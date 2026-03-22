@@ -6,13 +6,26 @@ import org.bukkit.entity.Player;
 import stark.skyBlockTest2.island.Island;
 import stark.skyBlockTest2.island.IslandManager;
 import stark.skyBlockTest2.island.IslandType;
+import stark.skyBlockTest2.rank.Rank;
+import stark.skyBlockTest2.rank.RankManager;
+import stark.skyBlockTest2.settings.PlayerSettingsManager;
 
 public class BorderManager {
 
     private final IslandManager islandManager;
+    private PlayerSettingsManager playerSettingsManager;
+    private RankManager rankManager;
 
     public BorderManager(IslandManager islandManager) {
         this.islandManager = islandManager;
+    }
+
+    public void setPlayerSettingsManager(PlayerSettingsManager playerSettingsManager) {
+        this.playerSettingsManager = playerSettingsManager;
+    }
+
+    public void setRankManager(RankManager rankManager) {
+        this.rankManager = rankManager;
     }
 
     private boolean isIslandWorld(World world) {
@@ -24,6 +37,14 @@ public class BorderManager {
     }
 
     public void updateBorder(Player player) {
+        boolean canHide = rankManager != null
+                && rankManager.getRank(player).getWeight() >= Rank.VIP.getWeight();
+        if (canHide && playerSettingsManager != null
+                && !playerSettingsManager.getSettings(player.getUniqueId()).isBorderVisible()) {
+            removeBorder(player);
+            return;
+        }
+
         if (!isIslandWorld(player.getWorld())) {
             removeBorder(player);
             return;

@@ -6,6 +6,7 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import stark.skyBlockTest2.rank.RankManager;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,11 +16,13 @@ import org.bukkit.Sound;
 public class TeleportManager {
 
     private final JavaPlugin plugin;
+    private final RankManager rankManager;
     private final Map<UUID, BukkitRunnable> tasks = new HashMap<>();
     private Location spawnLocation;
 
-    public TeleportManager(JavaPlugin plugin) {
+    public TeleportManager(JavaPlugin plugin, RankManager rankManager) {
         this.plugin = plugin;
+        this.rankManager = rankManager;
         loadSpawn();
     }
 
@@ -72,17 +75,31 @@ public class TeleportManager {
         p.teleport(spawnLocation);
     }
 
-    // 🔹 START TELEPORTU
+    // 🔹 START TELEPORTU (spawn) — opóźnienie z config na podstawie rangi
     public void teleportWithDelay(Player p) {
+        teleportWithDelay(p, spawnLocation, getDelay(p));
+    }
 
-        // cancel przy ponownym /spawn
+    // 🔹 START TELEPORTU z dowolnym celem — opóźnienie z config na podstawie rangi
+    public void teleportWithDelay(Player p, Location destination) {
+        teleportWithDelay(p, destination, getDelay(p));
+    }
+
+    private int getDelay(Player p) {
+        String rank = rankManager.getRank(p).name();
+        return plugin.getConfig().getInt("teleport.delay-by-rank." + rank, 5);
+    }
+
+    // 🔹 START TELEPORTU z dowolnym celem i jawnym czasem odliczania
+    public void teleportWithDelay(Player p, Location destination, int delaySeconds) {
+
         cancelTeleport(p, "§7Restart teleportu");
 
         Location start = p.getLocation().clone();
 
         BukkitRunnable task = new BukkitRunnable() {
 
-            int time = 5;
+            int time = delaySeconds;
 
             @Override
             public void run() {
@@ -93,7 +110,7 @@ public class TeleportManager {
                 }
 
                 if (time == 0) {
-                    p.teleport(spawnLocation);
+                    p.teleport(destination);
                     p.playSound(p.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1f);
                     p.sendTitle("§aTeleport!", "", 0, 40, 10);
                     tasks.remove(p.getUniqueId());

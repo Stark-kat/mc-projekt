@@ -1,0 +1,72 @@
+# Questy tygodniowe
+# active: - lista ID aktualnie aktywnych questów (ustawiana automatycznie)
+# next:   - lista ID questów które wejdą przy następnym resecie (ustaw ręcznie)
+# pool:   - wszystkie dostępne questy do losowania
+
+active: []
+
+next: []
+
+pool:
+
+  # ---- Górnicze ----
+  deep_miner:
+    trigger: BREAK_BLOCK
+    target: DEEPSLATE
+    display-name: "Gornik Glebinowy"
+    description: "Wykop deepslate w swoim swiecie"
+    icon: DEEPSLATE
+    amount: 256
+    xp-reward: 500
+    item-rewards:
+      - DIAMOND:2
+
+  diamond_miner:
+    trigger: BREAK_BLOCK
+    target: DIAMOND_ORE
+    display-name: "Lowca Diamentow"
+    description: "Znajdz diamenty na swojej wyspie"
+    icon: DIAMOND_ORE
+    amount: 10
+    xp-reward: 800
+    item-rewards:
+      - DIAMOND:5
+      - custom:book_fortune_3
+
+  # ---- Walka ----
+  blaze_slayer:
+    trigger: KILL_MOB
+    target: BLAZE
+    display-name: "Pogromca Blaze"
+    description: "Pokonaj Blaze na Netherowej Wyspie"
+    icon: BLAZE_ROD
+    amount: 30
+    xp-reward: 1000
+    item-rewards:
+      - BLAZE_ROD:16
+      - custom:spawner_blaze
+
+  elite_hunter:
+    trigger: KILL_MOB
+    target: WITCH
+    display-name: "Lowca Wiedźm"
+    description: "Pokonaj wiedźmy na swojej wyspie"
+    icon: GLASS_BOTTLE
+    amount: 15
+    xp-reward: 700
+    item-rewards:
+      - GLASS_BOTTLE:16
+      - SUGAR:8
+
+  # ---- Rybołówstwo ----
+  master_fisher:
+    trigger: FISH
+    target: ""
+    display-name: "Mistrz Wedkowania"
+    description: "Zlow duzo ryb w tygodniu"
+    icon: FISHING_ROD
+    amount: 50
+    xp-reward: 600
+    item-rewards:
+      - SALMON:16
+      - custom:book_looting_3

@@ -12,14 +12,12 @@ public class Island {
     private Location home;
     private int size;
     private final int index;
-    // final — mapa jest zawsze inicjalizowana w konstruktorze
     private final Map<IslandAction, Boolean> visitorSettings = new HashMap<>();
-
-    // Zbanowani gracze — nie mogą wejść na wyspę nawet jeśli TELEPORT_VISIT = true
     private final Set<UUID> bannedPlayers = new HashSet<>();
-
-    // Role członków — właściciel nie jest tu wpisany (wynika z pola owner)
     private final Map<UUID, IslandRole> memberRoles = new HashMap<>();
+
+    // ---- XP wyspy (wspólne dla całej wyspy, czysto prestiżowe) ----
+    private long xp = 0;
 
     public Island(UUID owner, Location center, int size, int index, List<UUID> members) {
         this.owner = owner;
@@ -39,10 +37,6 @@ public class Island {
     public int getMinChunkZ() { return (center.getBlockZ() >> 4) - size; }
     public int getMaxChunkZ() { return (center.getBlockZ() >> 4) + size; }
 
-    /**
-     * Sprawdza czy podana lokalizacja jest wewnątrz wyspy.
-     * Zabezpieczone przed null-worldem (np. gracz w trakcie teleportu).
-     */
     public boolean isInside(Location loc) {
         if (loc == null) return false;
         if (loc.getWorld() == null || center.getWorld() == null) return false;
@@ -59,7 +53,6 @@ public class Island {
     // -------------------------------------------------------------------------
 
     public UUID getOwner() { return owner; }
-
     public void setOwner(UUID owner) { this.owner = owner; }
 
     public List<UUID> getMembers() { return members; }
@@ -69,22 +62,28 @@ public class Island {
     }
 
     public Location getCenter() { return center; }
-
-    public Location getHome() { return home; }
-
+    public Location getHome()   { return home; }
     public void setHome(Location home) { this.home = home; }
 
-    public int getSize() { return size; }
-
+    public int getSize()  { return size; }
     public void setSize(int size) { this.size = size; }
 
     public int getIndex() { return index; }
+
+    // ---- XP ----
+
+    public long getXp() { return xp; }
+
+    public void setXp(long xp) { this.xp = Math.max(0, xp); }
+
+    public void addXp(long amount) {
+        if (amount > 0) this.xp += amount;
+    }
 
     // -------------------------------------------------------------------------
     // Ustawienia gości
     // -------------------------------------------------------------------------
 
-    /** Domyślnie gość nie może nic — zwraca false jeśli brak wpisu. */
     public boolean canVisitorDo(IslandAction action) {
         return visitorSettings.getOrDefault(action, false);
     }
@@ -101,27 +100,15 @@ public class Island {
     // System banów
     // -------------------------------------------------------------------------
 
-    public boolean isBanned(UUID uuid) {
-        return bannedPlayers.contains(uuid);
-    }
-
-    public void banPlayer(UUID uuid) {
-        bannedPlayers.add(uuid);
-    }
-
-    public void unbanPlayer(UUID uuid) {
-        bannedPlayers.remove(uuid);
-    }
-
-    public Set<UUID> getBannedPlayers() {
-        return bannedPlayers;
-    }
+    public boolean isBanned(UUID uuid)  { return bannedPlayers.contains(uuid); }
+    public void banPlayer(UUID uuid)    { bannedPlayers.add(uuid); }
+    public void unbanPlayer(UUID uuid)  { bannedPlayers.remove(uuid); }
+    public Set<UUID> getBannedPlayers() { return bannedPlayers; }
 
     // -------------------------------------------------------------------------
     // System ról
     // -------------------------------------------------------------------------
 
-    /** Zwraca rolę gracza. Właściciel zawsze OWNER, nieznany gracz — null. */
     public IslandRole getRole(UUID uuid) {
         if (uuid.equals(owner)) return IslandRole.OWNER;
         if (memberRoles.containsKey(uuid)) return memberRoles.get(uuid);
@@ -129,16 +116,11 @@ public class Island {
         return null;
     }
 
-    public void setRole(UUID uuid, IslandRole role) {
-        memberRoles.put(uuid, role);
-    }
-
-    public Map<UUID, IslandRole> getMemberRoles() {
-        return memberRoles;
-    }
+    public void setRole(UUID uuid, IslandRole role) { memberRoles.put(uuid, role); }
+    public Map<UUID, IslandRole> getMemberRoles()   { return memberRoles; }
 
     // -------------------------------------------------------------------------
-    // equals / hashCode — porównujemy po indeksie, który jest unikalny
+    // equals / hashCode / toString
     // -------------------------------------------------------------------------
 
     @Override
@@ -149,12 +131,10 @@ public class Island {
     }
 
     @Override
-    public int hashCode() {
-        return Integer.hashCode(index);
-    }
+    public int hashCode() { return Integer.hashCode(index); }
 
     @Override
     public String toString() {
-        return "Island{owner=" + owner + ", index=" + index + ", size=" + size + "}";
+        return "Island{owner=" + owner + ", index=" + index + ", size=" + size + ", xp=" + xp + "}";
     }
 }
